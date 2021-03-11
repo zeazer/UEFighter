@@ -34,6 +34,19 @@ protected:
 	virtual void SetupPlayerInputComponent(class UInputComponent* InputComponent) override;
 	// End of APawn interface
 
+	void TakeDamage(float damageAmount);
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Attacks")
+	bool mWasFirstAttackUsed;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Health")
+	float mPlayerHealth;
+
+
+	void StartAttack1();
+	void StartAttack2();
+	void StartAttack3();
+	void StartAttack4();
 
 public:
 	AUEFighterCharacter();

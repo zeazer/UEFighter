@@ -9,6 +9,8 @@ public class UEFighterTarget : TargetRules
 	{
 		Type = TargetType.Game;
 		DefaultBuildSettings = BuildSettingsVersion.V2;
+		bUseUnityBuild = false;
+		bUsePCHFiles = false;
 		ExtraModuleNames.Add("UEFighter");
 	}
 }
