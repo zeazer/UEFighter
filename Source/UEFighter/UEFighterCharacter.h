@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
+#include "UEFighterGameInstance.h"
 #include "UEFighterCharacter.generated.h"
 
 UCLASS(config=Game)
@@ -34,14 +35,11 @@ protected:
 	virtual void SetupPlayerInputComponent(class UInputComponent* InputComponent) override;
 	// End of APawn interface
 
-	void TakeDamage(float damageAmount);
-
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Attacks")
 	bool mWasFirstAttackUsed;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Health")
 	float mPlayerHealth;
-
 
 	void StartAttack1();
 	void StartAttack2();
@@ -51,8 +49,15 @@ protected:
 public:
 	AUEFighterCharacter();
 
+	virtual void BeginPlay() override;
+
+	void TakeDamage(float damageAmount);
+
 	/** Returns SideViewCameraComponent subobject **/
 	FORCEINLINE class UCameraComponent* GetSideViewCameraComponent() const { return SideViewCameraComponent; }
 	/** Returns CameraBoom subobject **/
 	FORCEINLINE class USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character")
+	ECharacterClass mCharacterClass;
 };

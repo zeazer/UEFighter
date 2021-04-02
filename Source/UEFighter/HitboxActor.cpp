@@ -4,6 +4,8 @@
 #include "HitboxActor.h"
 #include "Engine/StaticMesh.h"
 #include "Materials/Material.h"
+#include "UEFighterCharacter.h"
+#include "Kismet/GameplayStatics.h"
 
 AHitboxActor::AHitboxActor()
 {
@@ -38,6 +40,34 @@ void AHitboxActor::SpawnHitbox()
 
 		mHitboxMeshComponent->SetWorldLocation(mHitboxLocation);
 		mHitboxMeshComponent->SetVisibility(true);
+		CheckCollision();
+	}
+}
+
+void AHitboxActor::CheckCollision()
+{
+	if (HasAuthority())
+	{
+		TArray<AActor*> foundCharacters;
+		UGameplayStatics::GetAllActorsOfClass(GetWorld(), AUEFighterCharacter::StaticClass(), foundCharacters);
+
+		for (auto* playerActor : foundCharacters)
+		{
+			auto* instigator = GetInstigator();
+			if (instigator != playerActor)
+			{
+				auto overlap = this->IsOverlappingActor(playerActor);
+				if (overlap)
+				{
+					auto* playerChar = Cast<AUEFighterCharacter>(playerActor);
+					if (playerChar)
+					{
+						playerChar->TakeDamage(mHitboxDamage);
+					}
+				}
+			}
+		}
+
 	}
 }
 

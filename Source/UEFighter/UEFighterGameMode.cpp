@@ -3,13 +3,16 @@
 #include "UEFighterGameMode.h"
 #include "UEFighterCharacter.h"
 #include "UObject/ConstructorHelpers.h"
+#include "Kismet/GameplayStatics.h"
+#include "UEFighterGameInstance.h"
 
 AUEFighterGameMode::AUEFighterGameMode()
 {
-	// set default pawn class to our Blueprinted character
-	static ConstructorHelpers::FClassFinder<APawn> PlayerPawnBPClass(TEXT("/Game/SideScrollerCPP/Blueprints/SideScrollerCharacter"));
-	if (PlayerPawnBPClass.Class != nullptr)
-	{
-		DefaultPawnClass = PlayerPawnBPClass.Class;
-	}
+	DefaultPawnClass = NULL;
+}
+
+void AUEFighterGameMode::BeginPlay()
+{
+
+	Cast<UUEFighterGameInstance>(GetGameInstance())->SpawnPlayers(GetWorld());
 }

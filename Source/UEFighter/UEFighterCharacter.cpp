@@ -6,6 +6,7 @@
 #include "Components/InputComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "UEFighterGameInstance.h"
 
 AUEFighterCharacter::AUEFighterCharacter()
 {
@@ -45,6 +46,12 @@ AUEFighterCharacter::AUEFighterCharacter()
 	// are set in the derived blueprint asset named MyCharacter (to avoid direct content references in C++)
 
 	mPlayerHealth = 1.f;
+}
+
+void AUEFighterCharacter::BeginPlay()
+{
+	Super::BeginPlay();
+	Cast<UUEFighterGameInstance>(GetGameInstance())->PushMenu(EMenuType::InGameHUD);
 }
 
 //////////////////////////////////////////////////////////////////////////

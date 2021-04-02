@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/GameModeBase.h"
 #include "UEFighterGameMode.generated.h"
+class AUEFighterCharacter;
 
 UCLASS(minimalapi)
 class AUEFighterGameMode : public AGameModeBase
@@ -13,6 +14,9 @@ class AUEFighterGameMode : public AGameModeBase
 
 public:
 	AUEFighterGameMode();
+
+	virtual void BeginPlay();
+private:
 };
 
 
