@@ -3,3 +3,16 @@
 
 #include "CharacterSelect.h"
 
+void UCharacterSelect::Init()
+{
+	APlayerController* playercontroller = GetGameInstance()->GetFirstLocalPlayerController();
+	if (playercontroller)
+	{
+		FInputModeGameOnly inputModeData;
+		inputModeData.SetConsumeCaptureMouseDown(false);
+
+		playercontroller->SetInputMode(inputModeData);
+		playercontroller->bShowMouseCursor = true;
+	}
+	Super::Init();
+}

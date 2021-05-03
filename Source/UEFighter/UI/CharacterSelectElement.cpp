@@ -3,8 +3,12 @@
 
 #include "CharacterSelectElement.h"
 #include "../UEFighterGameInstance.h"
+#include "Kismet/GameplayStatics.h"
 
 void UCharacterSelectElement::OnClick()
 {
-	Cast<UUEFighterGameInstance>(GetGameInstance())->mPlayer1CharacterChoice = mCharacterClassType;
+	auto* gameInstance = Cast<UUEFighterGameInstance>(GetGameInstance());
+	gameInstance->mPlayer1CharacterChoice = mCharacterClassType;
+
+	gameInstance->SwitchToLevelWithName(TEXT("InGame"), TEXT("UEFighterMap"));
 }

@@ -7,34 +7,33 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "UEFighterGameInstance.h"
+#include "HitboxActor.h"
+#include "UObject/ConstructorHelpers.h"
 
 AUEFighterCharacter::AUEFighterCharacter()
 {
-	// Set size for collision capsule
 	GetCapsuleComponent()->InitCapsuleSize(42.f, 96.0f);
 
-	// Don't rotate when the controller rotates.
+	LoadHurtbox();
+
 	bUseControllerRotationPitch = false;
 	bUseControllerRotationYaw = false;
 	bUseControllerRotationRoll = false;
 
-	// Create a camera boom attached to the root (capsule)
 	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
 	CameraBoom->SetupAttachment(RootComponent);
-	CameraBoom->SetUsingAbsoluteRotation(true); // Rotation of the character should not affect rotation of boom
+	CameraBoom->SetUsingAbsoluteRotation(true);
 	CameraBoom->bDoCollisionTest = false;
 	CameraBoom->TargetArmLength = 500.f;
 	CameraBoom->SocketOffset = FVector(0.f, 0.f, 75.f);
 	CameraBoom->SetRelativeRotation(FRotator(0.f, 180.f, 0.f));
 
-	// Create a camera and attach to boom
 	SideViewCameraComponent = CreateDefaultSubobject<UCameraComponent>(TEXT("SideViewCamera"));
 	SideViewCameraComponent->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
-	SideViewCameraComponent->bUsePawnControlRotation = false; // We don't want the controller rotating the camera
+	SideViewCameraComponent->bUsePawnControlRotation = false;
 
-	// Configure character movement
-	GetCharacterMovement()->bOrientRotationToMovement = true; // Face in the direction we are moving..
-	GetCharacterMovement()->RotationRate = FRotator(0.0f, 720.0f, 0.0f); // ...at this rotation rate
+	GetCharacterMovement()->bOrientRotationToMovement = false;
+	GetCharacterMovement()->RotationRate = FRotator(0.0f, 720.0f, 0.0f);
 	GetCharacterMovement()->GravityScale = 2.f;
 	GetCharacterMovement()->AirControl = 0.80f;
 	GetCharacterMovement()->JumpZVelocity = 1000.f;
@@ -42,24 +41,23 @@ AUEFighterCharacter::AUEFighterCharacter()
 	GetCharacterMovement()->MaxWalkSpeed = 600.f;
 	GetCharacterMovement()->MaxFlySpeed = 600.f;
 
-	// Note: The skeletal mesh and anim blueprint references on the Mesh component (inherited from Character) 
-	// are set in the derived blueprint asset named MyCharacter (to avoid direct content references in C++)
+	mWasAttackUsed.Init(false, (int)EAttack::VE_COUNT);
 
+	mHurtbox = nullptr;
 	mPlayerHealth = 1.f;
+	mCanCombo = false;
 }
 
 void AUEFighterCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 	Cast<UUEFighterGameInstance>(GetGameInstance())->PushMenu(EMenuType::InGameHUD);
+	SpawnHurtbox();
 }
 
-//////////////////////////////////////////////////////////////////////////
-// Input
 
 void AUEFighterCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent)
 {
-	// set up gameplay key bindings
 	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ACharacter::Jump);
 	PlayerInputComponent->BindAction("Jump", IE_Released, this, &ACharacter::StopJumping);
 	PlayerInputComponent->BindAxis("MoveRight", this, &AUEFighterCharacter::MoveRight);
@@ -78,44 +76,98 @@ void AUEFighterCharacter::TakeDamage(float damageAmount)
 {
 	UE_LOG(LogTemp, Warning, TEXT("We took %f damage"), damageAmount);
 	mPlayerHealth -= damageAmount;
-
 	if (mPlayerHealth < 0.0f)
 	{
 		mPlayerHealth = 0.0f;
 	}
 }
 
+void AUEFighterCharacter::FlipCharacter(int scaleValue)
+{
+	if (auto* capsuleComponent = GetCapsuleComponent()->GetChildComponent(1))
+	{
+		mFaceDirection = scaleValue;
+		auto transform = capsuleComponent->GetRelativeTransform();
+		auto scale = transform.GetScale3D();
+		scale.Y = scaleValue;
+		transform.SetScale3D(scale);
+		capsuleComponent->SetRelativeTransform(transform);
+	}
+}
+
 void AUEFighterCharacter::StartAttack1()
 {
-	UE_LOG(LogTemp, Warning, TEXT("Attack1"));
-	mWasFirstAttackUsed = true;
+	UE_LOG(LogTemp, Warning, TEXT("Light Attack"));
+	mWasAttackUsed[(int)EAttack::VE_LightAttack] = true;
 }
 
 void AUEFighterCharacter::StartAttack2()
 {
-	UE_LOG(LogTemp, Warning, TEXT("Attack2"));
+	UE_LOG(LogTemp, Warning, TEXT("Medium Attack"));
+	mWasAttackUsed[(int)EAttack::VE_MediumAttack] = true;
 }
 
 void AUEFighterCharacter::StartAttack3()
 {
-	UE_LOG(LogTemp, Warning, TEXT("Attack3"));
+	UE_LOG(LogTemp, Warning, TEXT("Heavy Attack"));
+	mWasAttackUsed[(int)EAttack::VE_HeavyAttack] = true;
 }
 
 void AUEFighterCharacter::StartAttack4()
 {
-	UE_LOG(LogTemp, Warning, TEXT("Attack4"));
-	TakeDamage(0.05f);
+	UE_LOG(LogTemp, Warning, TEXT("Special Attack"));
+	mWasAttackUsed[(int)EAttack::VE_SpecialAttack] = true;
+}
+
+void AUEFighterCharacter::LoadHurtbox()
+{
+	ConstructorHelpers::FClassFinder<AActor> hurtboxActorClass(TEXT("Blueprint'/Game/UEFighter/Blueprints/Hurtbox_BP.Hurtbox_BP_C'"));
+	if (hurtboxActorClass.Succeeded())
+	{
+		mHurtboxClass = hurtboxActorClass.Class;
+	}
+}
+
+void AUEFighterCharacter::SpawnHurtbox()
+{
+	if (mHurtboxClass.Get()->IsValidLowLevel())
+	{
+		auto& transform = GetCharacterMovement()->GetPawnOwner()->GetActorTransform();
+		FActorSpawnParameters spawnInfo;
+		spawnInfo.Instigator = this;
+		mHurtbox = GetWorld()->SpawnActor<AActor>(mHurtboxClass.Get(), transform, spawnInfo);
+
+		mHurtbox->AttachToComponent(RootComponent, FAttachmentTransformRules::SnapToTargetIncludingScale);
+
+		mHurtbox->SetOwner(this);
+	}
 }
 
 void AUEFighterCharacter::MoveRight(float Value)
 {
-	// add movement in that direction
+
+	if (Value > 0.2f)
+	{
+		mDirectionalInput = EDirectionalInput::VE_MovingRight;
+	}
+	else if (Value < -0.2f)
+	{
+		mDirectionalInput = EDirectionalInput::VE_MovingLeft;
+	}
+	else
+	{
+		mDirectionalInput = EDirectionalInput::VE_Default;
+	}
+
+	if (Value >= 1 || Value <= -1)
+	{
+		FlipCharacter(Value);
+	}
 	AddMovementInput(FVector(0.f, -1.f, 0.f), Value);
 }
 
 void AUEFighterCharacter::TouchStarted(const ETouchIndex::Type FingerIndex, const FVector Location)
 {
-	// jump on any touch
 	Jump();
 }
 

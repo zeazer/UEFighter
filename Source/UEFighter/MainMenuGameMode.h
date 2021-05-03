@@ -3,16 +3,15 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "MenuBase.h"
-#include "CharacterSelect.generated.h"
+#include "GameFramework/GameMode.h"
+#include "MainMenuGameMode.generated.h"
 
 /**
- *
+ * 
  */
 UCLASS()
-class UEFIGHTER_API UCharacterSelect : public UMenuBase
+class UEFIGHTER_API AMainMenuGameMode : public AGameMode
 {
 	GENERATED_BODY()
-public:
-	virtual void Init();
+	
 };

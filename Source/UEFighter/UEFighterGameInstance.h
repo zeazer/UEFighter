@@ -34,7 +34,7 @@ public:
 	void PopMenu();
 
 	UFUNCTION(BlueprintCallable)
-	void SwitchToLevelWithName(const FString& name, const FName& levelName);
+	void SwitchToLevelWithName(const FString& name, const FString& levelName);
 
 #pragma region Player/CharacterVariables
 
@@ -52,6 +52,8 @@ public:
 	void SpawnPlayers(UWorld* world);
 
 private:
+	bool IsLevelTransfereAvailable();
+
 	void ShowWidget();
 
 	void RemoveCurrentWidget();

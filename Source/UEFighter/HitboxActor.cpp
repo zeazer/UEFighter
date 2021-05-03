@@ -6,10 +6,13 @@
 #include "Materials/Material.h"
 #include "UEFighterCharacter.h"
 #include "Kismet/GameplayStatics.h"
+#include "Hurtbox.h"
 
 AHitboxActor::AHitboxActor()
 {
 	PrimaryActorTick.bCanEverTick = true;
+	RootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("Root"));
+
 	mHitboxMeshComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("HitboxMesh"));
 	if (mHitboxMeshComponent)
 	{
@@ -20,9 +23,9 @@ AHitboxActor::AHitboxActor()
 	}
 }
 
-void AHitboxActor::SpawnHitbox()
+void AHitboxActor::SpawnHitbox(const FVector& hitboxLocation, float hitboxDamage, float hitboxOffsetValue)
 {
-	if (mHitboxMeshComponent)
+	if (mHitboxMeshComponent && GetOwner())
 	{
 		switch (mHitboxType)
 		{
@@ -38,31 +41,36 @@ void AHitboxActor::SpawnHitbox()
 
 		}
 
+		auto* owner = Cast<AUEFighterCharacter>(GetOwner());
+		auto direction = owner->GetFaceDirection();
+		mHitboxLocation = hitboxLocation;
+		mHitboxLocation.Y -= hitboxOffsetValue * direction;
+		
 		mHitboxMeshComponent->SetWorldLocation(mHitboxLocation);
 		mHitboxMeshComponent->SetVisibility(true);
-		CheckCollision();
+		CheckCollision(hitboxDamage);
 	}
 }
 
-void AHitboxActor::CheckCollision()
+void AHitboxActor::CheckCollision(float hitboxDamage)
 {
 	if (HasAuthority())
 	{
-		TArray<AActor*> foundCharacters;
-		UGameplayStatics::GetAllActorsOfClass(GetWorld(), AUEFighterCharacter::StaticClass(), foundCharacters);
+		TArray<AActor*> hurtboxesFound;
+		UGameplayStatics::GetAllActorsOfClass(GetWorld(), AHurtbox::StaticClass(), hurtboxesFound);
 
-		for (auto* playerActor : foundCharacters)
+		for (auto* hurtbox : hurtboxesFound)
 		{
 			auto* instigator = GetInstigator();
-			if (instigator != playerActor)
+			if (instigator != hurtbox->GetOwner())
 			{
-				auto overlap = this->IsOverlappingActor(playerActor);
+				auto overlap = this->IsOverlappingActor(hurtbox);
 				if (overlap)
 				{
-					auto* playerChar = Cast<AUEFighterCharacter>(playerActor);
+					auto* playerChar = Cast<AUEFighterCharacter>(hurtbox->GetOwner());
 					if (playerChar)
 					{
-						playerChar->TakeDamage(mHitboxDamage);
+						playerChar->TakeDamage(hitboxDamage);
 					}
 				}
 			}
@@ -80,7 +88,6 @@ void AHitboxActor::BeginPlay()
 	}
 }
 
-// Called every frame
 void AHitboxActor::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);

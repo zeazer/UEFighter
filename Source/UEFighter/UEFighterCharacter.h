@@ -7,10 +7,48 @@
 #include "UEFighterGameInstance.h"
 #include "UEFighterCharacter.generated.h"
 
+UENUM(BlueprintType)
+enum class EDirectionalInput : uint8
+{
+	VE_Default			UMETA(DisplayName = "NOT_MOVING"),
+	VE_MovingRight		UMETA(DisplayName = "MOVING_RIGHT"),
+	VE_MovingLeft		UMETA(DisplayName = "MOVING_LEFT")
+};
+
+UENUM(BlueprintType)
+enum class EAttack : uint8
+{
+	VE_LightAttack			UMETA(DisplayName = "LIGHT_ATTACK"),
+	VE_MediumAttack		UMETA(DisplayName = "MEDIUM_ATTACK"),
+	VE_HeavyAttack		UMETA(DisplayName = "HEAVY_ATTACK"),
+	VE_SpecialAttack		UMETA(DisplayName = "SPECIAL_ATTACK"),
+	VE_COUNT
+};
+
 UCLASS(config=Game)
 class AUEFighterCharacter : public ACharacter
 {
 	GENERATED_BODY()
+
+public:
+
+	AUEFighterCharacter();
+
+	virtual void BeginPlay() override;
+
+	UFUNCTION(BlueprintCallable)
+	void TakeDamage(float damageAmount);
+
+	/** Returns SideViewCameraComponent subobject **/
+	FORCEINLINE class UCameraComponent* GetSideViewCameraComponent() const { return SideViewCameraComponent; }
+	/** Returns CameraBoom subobject **/
+	FORCEINLINE class USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
+
+	FORCEINLINE class AActor* GetHurtbox() const { return mHurtbox; }
+
+	float GetFaceDirection() const { return mFaceDirection; }
+
+	void FlipCharacter(int scaleValue);
 
 	/** Side view camera */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
@@ -19,6 +57,12 @@ class AUEFighterCharacter : public ACharacter
 	/** Camera boom positioning the camera beside the character */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	class USpringArmComponent* CameraBoom;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character")
+	ECharacterClass mCharacterClass;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
+	EDirectionalInput mDirectionalInput;
 
 protected:
 
@@ -35,29 +79,29 @@ protected:
 	virtual void SetupPlayerInputComponent(class UInputComponent* InputComponent) override;
 	// End of APawn interface
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Attacks")
-	bool mWasFirstAttackUsed;
+	void LoadHurtbox();
+	void SpawnHurtbox();
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Hitbox")
+	AActor* mHurtbox;
+
+	TSubclassOf<class AActor> mHurtboxClass;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Health")
 	float mPlayerHealth;
 
+	float mFaceDirection;
+
+#pragma region Attacks
 	void StartAttack1();
 	void StartAttack2();
 	void StartAttack3();
 	void StartAttack4();
 
-public:
-	AUEFighterCharacter();
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Attacks")
+	TArray<bool> mWasAttackUsed;
 
-	virtual void BeginPlay() override;
-
-	void TakeDamage(float damageAmount);
-
-	/** Returns SideViewCameraComponent subobject **/
-	FORCEINLINE class UCameraComponent* GetSideViewCameraComponent() const { return SideViewCameraComponent; }
-	/** Returns CameraBoom subobject **/
-	FORCEINLINE class USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character")
-	ECharacterClass mCharacterClass;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Attacks")
+	bool mCanCombo;
+#pragma endregion
 };

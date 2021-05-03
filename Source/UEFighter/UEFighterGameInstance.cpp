@@ -14,7 +14,9 @@ UUEFighterGameInstance::UUEFighterGameInstance(const FObjectInitializer& ObjectI
 	mCurrentActiveWidget = nullptr;
 	mPlayer1CharacterChoice = ECharacterClass::SwatFighter;
 	mPlayer2CharacterChoice = ECharacterClass::SwatFighter;
-	LoadCharacterClass(TEXT("/Game/UEFighter/Blueprints/UEFigherCharacter_BP"));
+	LoadCharacterClass(TEXT("/Game/UEFighter/Blueprints/UEFighterCharacter_BP"));
+	LoadCharacterClass(TEXT("/Game/UEFighter/Blueprints/SwatFighterCharacter_BP"));
+	LoadCharacterClass(TEXT("/Game/UEFighter/Blueprints/MutantFighterCharacter_BP"));
 
 
 	static ConstructorHelpers::FClassFinder<UMenuBase> inGameWIdget(TEXT("WidgetBlueprint'/Game/UEFighter/UI/PlayerHUD.PlayerHUD_C'"));
@@ -23,6 +25,14 @@ UUEFighterGameInstance::UUEFighterGameInstance(const FObjectInitializer& ObjectI
 		auto type = inGameWIdget.Class.GetDefaultObject()->mMenuType;
 
 		mMenuWidgetClasses.Add(type, inGameWIdget.Class);
+	}
+
+	static ConstructorHelpers::FClassFinder<UMenuBase> chararacterSelectWidget(TEXT("WidgetBlueprint'/Game/UEFighter/UI/CharacterSelect_BP.CharacterSelect_BP_C'"));
+	if (chararacterSelectWidget.Succeeded())
+	{
+		auto type = chararacterSelectWidget.Class.GetDefaultObject()->mMenuType;
+
+		mMenuWidgetClasses.Add(type, chararacterSelectWidget.Class);
 	}
 }
 
@@ -51,17 +61,26 @@ void UUEFighterGameInstance::PopMenu()
 	ShowWidget();
 }
 
-void UUEFighterGameInstance::SwitchToLevelWithName(const FString& name, const FName& levelName)
+void UUEFighterGameInstance::SwitchToLevelWithName(const FString& name, const FString& levelName)
 {
 	if (!name.IsEmpty())
 	{
 		auto* world = GetWorld();
-		if (world->GetMapName() != levelName.ToString())
+		if (world->GetMapName() != levelName)
 		{
+			if (!IsLevelTransfereAvailable())
+			{
+				return;
+			}
 			PopMenu();
-			UGameplayStatics::OpenLevel(GetWorld(), levelName);
+			UGameplayStatics::OpenLevel(GetWorld(), *levelName);
 		}
 	}
+}
+
+bool UUEFighterGameInstance::IsLevelTransfereAvailable()
+{
+	return mLoadedCharacterClasses.Contains(mPlayer1CharacterChoice); /*&& mLoadedCharacterClasses.Contains(mPlayer2CharacterChoice)*/ // Will be needed when player 2 is implemented to full extent.
 }
 
 void UUEFighterGameInstance::ShowWidget()
@@ -117,7 +136,6 @@ void UUEFighterGameInstance::SpawnPlayers(UWorld* world)
 				{
 					controller->Possess(mPlayer2);
 				}
-
 			}
 		}
 	}
@@ -133,10 +151,11 @@ AUEFighterCharacter* UUEFighterGameInstance::DetermineCharacterClass(const FTran
 
 void UUEFighterGameInstance::LoadCharacterClass(const FString& characterClassPath)
 {
-	static ConstructorHelpers::FClassFinder<AUEFighterCharacter> PlayerPawnBPClass(*characterClassPath);
-	if (PlayerPawnBPClass.Class != nullptr)
+	ConstructorHelpers::FClassFinder<AUEFighterCharacter> PlayerPawnBPClass(*characterClassPath);
+	if (PlayerPawnBPClass.Succeeded())
 	{
-		mLoadedCharacterClasses.Emplace(PlayerPawnBPClass.Class.GetDefaultObject()->mCharacterClass, PlayerPawnBPClass.Class);
+		auto& type = PlayerPawnBPClass.Class.GetDefaultObject()->mCharacterClass;
+		mLoadedCharacterClasses.Emplace(type, PlayerPawnBPClass.Class);
 	}
 
 }

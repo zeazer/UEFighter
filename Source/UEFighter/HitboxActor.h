@@ -33,10 +33,10 @@ public:
 	void VisualizeHitbox();
 
 	UFUNCTION(BlueprintCallable)
-	void SpawnHitbox();
+	void SpawnHitbox(const FVector& hitboxLocation, const float hitboxDamage, const float hitboxOffsetValue);
 
 	UFUNCTION(BlueprintCallable)
-	void CheckCollision();
+	void CheckCollision(const float hitboxDamage);
 
 	UPROPERTY(EditAnywhere)
 	UStaticMeshComponent* mHitboxMeshComponent;
@@ -53,15 +53,10 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Hitbox")
 	EHitboxType mHitboxType;
 
+protected:
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Hitbox")
 	FVector mHitboxLocation;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Hitbox")
-	float mHitboxDamage;
-
-protected:
 	virtual void BeginPlay() override;
-
-
-
 };
