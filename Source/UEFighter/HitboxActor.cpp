@@ -70,7 +70,7 @@ void AHitboxActor::CheckCollision(float hitboxDamage)
 					auto* playerChar = Cast<AUEFighterCharacter>(hurtbox->GetOwner());
 					if (playerChar)
 					{
-						playerChar->TakeDamage(hitboxDamage);
+						playerChar->TakeAbilityDamage(hitboxDamage);
 					}
 				}
 			}

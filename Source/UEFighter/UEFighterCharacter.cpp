@@ -9,6 +9,10 @@
 #include "UEFighterGameInstance.h"
 #include "HitboxActor.h"
 #include "UObject/ConstructorHelpers.h"
+#include "GAS/GASComponent.h"
+#include "GAS/GASAttributeSet.h"
+#include "GAS/GASGameplayAbility.h"
+#include <GameplayEffect.h>
 
 AUEFighterCharacter::AUEFighterCharacter()
 {
@@ -41,6 +45,12 @@ AUEFighterCharacter::AUEFighterCharacter()
 	GetCharacterMovement()->MaxWalkSpeed = 600.f;
 	GetCharacterMovement()->MaxFlySpeed = 600.f;
 
+	//Ability Creation
+	mAbilitySystemComponent = CreateDefaultSubobject<UGASComponent>("AbilitySystemComp");
+	mAbilitySystemComponent->SetIsReplicated(true);
+	mAbilitySystemComponent->SetReplicationMode(EGameplayEffectReplicationMode::Minimal);
+	mAttributes = CreateDefaultSubobject<UGASAttributeSet>("Attributes");
+
 	mWasAttackUsed.Init(false, (int)EAttack::VE_COUNT);
 
 	mHurtbox = nullptr;
@@ -58,23 +68,90 @@ void AUEFighterCharacter::BeginPlay()
 
 void AUEFighterCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent)
 {
+	Super::SetupPlayerInputComponent(PlayerInputComponent);
+
 	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ACharacter::Jump);
 	PlayerInputComponent->BindAction("Jump", IE_Released, this, &ACharacter::StopJumping);
 	PlayerInputComponent->BindAxis("MoveRight", this, &AUEFighterCharacter::MoveRight);
 
-	PlayerInputComponent->BindAction("Attack1", IE_Pressed, this, &AUEFighterCharacter::StartAttack1);
+	/*PlayerInputComponent->BindAction("Attack1", IE_Pressed, this, &AUEFighterCharacter::StartAttack1);
 	PlayerInputComponent->BindAction("Attack2", IE_Pressed, this, &AUEFighterCharacter::StartAttack2);
 	PlayerInputComponent->BindAction("Attack3", IE_Pressed, this, &AUEFighterCharacter::StartAttack3);
-	PlayerInputComponent->BindAction("Attack4", IE_Pressed, this, &AUEFighterCharacter::StartAttack4);
+	PlayerInputComponent->BindAction("Attack4", IE_Pressed, this, &AUEFighterCharacter::StartAttack4);*/
 
 
 	PlayerInputComponent->BindTouch(IE_Pressed, this, &AUEFighterCharacter::TouchStarted);
 	PlayerInputComponent->BindTouch(IE_Released, this, &AUEFighterCharacter::TouchStopped);
+
+	
+
+	if (mAbilitySystemComponent && InputComponent)
+	{
+		const FGameplayAbilityInputBinds binds("Confirm", "Cancel", "EGASAbilityInputID", static_cast<int32>(EGASAbilityInputID::Confirm), static_cast<int32>(EGASAbilityInputID::Cancel));
+		mAbilitySystemComponent->BindAbilityActivationToInputComponent(InputComponent, binds);
+	}
 }
 
-void AUEFighterCharacter::TakeDamage(float damageAmount)
+void AUEFighterCharacter::PossessedBy(AController* NewController)
 {
-	UE_LOG(LogTemp, Warning, TEXT("We took %f damage"), damageAmount);
+	Super::PossessedBy(NewController);
+
+	mAbilitySystemComponent->InitAbilityActorInfo(this, this);
+
+	InitializeAttributes();
+	GiveAbilities();
+}
+
+void AUEFighterCharacter::InitializeAttributes()
+{
+	if (mAbilitySystemComponent && mDefaultAttributeEffect)
+	{
+		FGameplayEffectContextHandle effectContect = mAbilitySystemComponent->MakeEffectContext();
+		effectContect.AddSourceObject(this);
+
+		FGameplayEffectSpecHandle speccHandle = mAbilitySystemComponent->MakeOutgoingSpec(mDefaultAttributeEffect, 1, effectContect);
+
+		if (speccHandle.IsValid())
+		{
+			FActiveGameplayEffectHandle GEHandle = mAbilitySystemComponent->ApplyGameplayEffectSpecToSelf(*speccHandle.Data.Get());
+		}
+	}
+}
+
+void AUEFighterCharacter::OnRep_PlayerState()
+{
+	Super::OnRep_PlayerState();
+
+	mAbilitySystemComponent->InitAbilityActorInfo(this, this);
+	InitializeAttributes();
+
+	if (mAbilitySystemComponent && InputComponent)
+	{
+		const FGameplayAbilityInputBinds binds("Confirm", "Cancel", "EGASAbilityInputID", static_cast<int32>(EGASAbilityInputID::Confirm), static_cast<int32>(EGASAbilityInputID::Cancel));
+		mAbilitySystemComponent->BindAbilityActivationToInputComponent(InputComponent, binds);
+	}
+}
+
+void AUEFighterCharacter::GiveAbilities()
+{
+	if (HasAuthority() && mAbilitySystemComponent)
+	{
+		for (auto& startupAbility : mDefaultAbilities)
+		{
+			int32 id = static_cast<int32>(startupAbility.GetDefaultObject()->mAbilityInputID);
+			mAbilitySystemComponent->GiveAbility(
+				FGameplayAbilitySpec(startupAbility, 1, id, this));
+		}
+	}
+}
+
+UAbilitySystemComponent* AUEFighterCharacter::GetAbilitySystemComponent() const
+{
+	return mAbilitySystemComponent;
+}
+
+void AUEFighterCharacter::TakeAbilityDamage(float damageAmount)
+{
 	mPlayerHealth -= damageAmount;
 	if (mPlayerHealth < 0.0f)
 	{
@@ -97,25 +174,21 @@ void AUEFighterCharacter::FlipCharacter(int scaleValue)
 
 void AUEFighterCharacter::StartAttack1()
 {
-	UE_LOG(LogTemp, Warning, TEXT("Light Attack"));
 	mWasAttackUsed[(int)EAttack::VE_LightAttack] = true;
 }
 
 void AUEFighterCharacter::StartAttack2()
 {
-	UE_LOG(LogTemp, Warning, TEXT("Medium Attack"));
 	mWasAttackUsed[(int)EAttack::VE_MediumAttack] = true;
 }
 
 void AUEFighterCharacter::StartAttack3()
 {
-	UE_LOG(LogTemp, Warning, TEXT("Heavy Attack"));
 	mWasAttackUsed[(int)EAttack::VE_HeavyAttack] = true;
 }
 
 void AUEFighterCharacter::StartAttack4()
 {
-	UE_LOG(LogTemp, Warning, TEXT("Special Attack"));
 	mWasAttackUsed[(int)EAttack::VE_SpecialAttack] = true;
 }
 

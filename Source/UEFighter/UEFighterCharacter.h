@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "UEFighterGameInstance.h"
+#include "AbilitySystemInterface.h"
 #include "UEFighterCharacter.generated.h"
 
 UENUM(BlueprintType)
@@ -26,7 +27,7 @@ enum class EAttack : uint8
 };
 
 UCLASS(config=Game)
-class AUEFighterCharacter : public ACharacter
+class AUEFighterCharacter : public ACharacter, public IAbilitySystemInterface
 {
 	GENERATED_BODY()
 
@@ -37,14 +38,15 @@ public:
 	virtual void BeginPlay() override;
 
 	UFUNCTION(BlueprintCallable)
-	void TakeDamage(float damageAmount);
+	void TakeAbilityDamage(float damageAmount);
 
-	/** Returns SideViewCameraComponent subobject **/
 	FORCEINLINE class UCameraComponent* GetSideViewCameraComponent() const { return SideViewCameraComponent; }
-	/** Returns CameraBoom subobject **/
+
 	FORCEINLINE class USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
 
 	FORCEINLINE class AActor* GetHurtbox() const { return mHurtbox; }
+
+	virtual class UAbilitySystemComponent* GetAbilitySystemComponent() const override;
 
 	float GetFaceDirection() const { return mFaceDirection; }
 
@@ -57,6 +59,11 @@ public:
 	/** Camera boom positioning the camera beside the character */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	class USpringArmComponent* CameraBoom;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Game, meta = (AllowPrivateAccess = "true"))
+	class UGASComponent* mAbilitySystemComponent;
+
+
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character")
 	ECharacterClass mCharacterClass;
@@ -78,6 +85,13 @@ protected:
 	// APawn interface
 	virtual void SetupPlayerInputComponent(class UInputComponent* InputComponent) override;
 	// End of APawn interface
+
+	virtual void PossessedBy(AController* NewController) override;
+	virtual void OnRep_PlayerState() override;
+
+	virtual void InitializeAttributes();
+	virtual void GiveAbilities();
+
 
 	void LoadHurtbox();
 	void SpawnHurtbox();
@@ -103,5 +117,14 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Attacks")
 	bool mCanCombo;
+
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "GAS")
+	TSubclassOf<class UGameplayEffect> mDefaultAttributeEffect;
+
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "GAS")
+	TArray<TSubclassOf<class UGASGameplayAbility>> mDefaultAbilities;
+
+	UPROPERTY()
+	class UGASAttributeSet* mAttributes;
 #pragma endregion
 };
