@@ -8,6 +8,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "UEFighterCharacter.h"
 #include "GameFramework/PlayerStart.h"
+#include "UEFightCamera.h"
 
 UUEFighterGameInstance::UUEFighterGameInstance(const FObjectInitializer& ObjectInitializer)
 {

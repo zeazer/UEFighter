@@ -40,9 +40,9 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void TakeAbilityDamage(float damageAmount);
 
-	FORCEINLINE class UCameraComponent* GetSideViewCameraComponent() const { return SideViewCameraComponent; }
-
-	FORCEINLINE class USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
+	//FORCEINLINE class UCameraComponent* GetSideViewCameraComponent() const { return SideViewCameraComponent; }
+	//
+	//FORCEINLINE class USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
 
 	FORCEINLINE class AActor* GetHurtbox() const { return mHurtbox; }
 
@@ -52,13 +52,13 @@ public:
 
 	void FlipCharacter(int scaleValue);
 
-	/** Side view camera */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
-	class UCameraComponent* SideViewCameraComponent;
-
-	/** Camera boom positioning the camera beside the character */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
-	class USpringArmComponent* CameraBoom;
+	///** Side view camera */
+	//UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
+	//class UCameraComponent* SideViewCameraComponent;
+	//
+	///** Camera boom positioning the camera beside the character */
+	//UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
+	//class USpringArmComponent* CameraBoom;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Game, meta = (AllowPrivateAccess = "true"))
 	class UGASComponent* mAbilitySystemComponent;
@@ -103,6 +103,9 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Health")
 	float mPlayerHealth;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Health")
+	float mMaxDistanceApart;
 
 	float mFaceDirection;
 

@@ -8,6 +8,7 @@
 #include "UEFighterGameInstance.generated.h"
 class UUserWidget;
 class AUEFighterCharacter;
+class AUEFightCamera;
 
 UENUM(BlueprintType)
 enum class ECharacterClass : uint8
@@ -71,5 +72,4 @@ private:
 	void LoadCharacterClass(const FString& characterClassPath);
 
 	TMap<ECharacterClass, TSubclassOf<AUEFighterCharacter>> mLoadedCharacterClasses;
-	
 };

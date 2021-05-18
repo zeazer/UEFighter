@@ -24,17 +24,17 @@ AUEFighterCharacter::AUEFighterCharacter()
 	bUseControllerRotationYaw = false;
 	bUseControllerRotationRoll = false;
 
-	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
-	CameraBoom->SetupAttachment(RootComponent);
-	CameraBoom->SetUsingAbsoluteRotation(true);
-	CameraBoom->bDoCollisionTest = false;
-	CameraBoom->TargetArmLength = 500.f;
-	CameraBoom->SocketOffset = FVector(0.f, 0.f, 75.f);
-	CameraBoom->SetRelativeRotation(FRotator(0.f, 180.f, 0.f));
-
-	SideViewCameraComponent = CreateDefaultSubobject<UCameraComponent>(TEXT("SideViewCamera"));
-	SideViewCameraComponent->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
-	SideViewCameraComponent->bUsePawnControlRotation = false;
+	//CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
+	//CameraBoom->SetupAttachment(RootComponent);
+	//CameraBoom->SetUsingAbsoluteRotation(true);
+	//CameraBoom->bDoCollisionTest = false;
+	//CameraBoom->TargetArmLength = 500.f;
+	//CameraBoom->SocketOffset = FVector(0.f, 0.f, 75.f);
+	//CameraBoom->SetRelativeRotation(FRotator(0.f, 180.f, 0.f));
+	//
+	//SideViewCameraComponent = CreateDefaultSubobject<UCameraComponent>(TEXT("SideViewCamera"));
+	//SideViewCameraComponent->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
+	//SideViewCameraComponent->bUsePawnControlRotation = false;
 
 	GetCharacterMovement()->bOrientRotationToMovement = false;
 	GetCharacterMovement()->RotationRate = FRotator(0.0f, 720.0f, 0.0f);
@@ -55,6 +55,7 @@ AUEFighterCharacter::AUEFighterCharacter()
 
 	mHurtbox = nullptr;
 	mPlayerHealth = 1.f;
+	mMaxDistanceApart = 800.f;
 	mCanCombo = false;
 }
 
@@ -74,22 +75,19 @@ void AUEFighterCharacter::SetupPlayerInputComponent(class UInputComponent* Playe
 	PlayerInputComponent->BindAction("Jump", IE_Released, this, &ACharacter::StopJumping);
 	PlayerInputComponent->BindAxis("MoveRight", this, &AUEFighterCharacter::MoveRight);
 
-	/*PlayerInputComponent->BindAction("Attack1", IE_Pressed, this, &AUEFighterCharacter::StartAttack1);
+	PlayerInputComponent->BindAction("Attack1", IE_Pressed, this, &AUEFighterCharacter::StartAttack1);
 	PlayerInputComponent->BindAction("Attack2", IE_Pressed, this, &AUEFighterCharacter::StartAttack2);
 	PlayerInputComponent->BindAction("Attack3", IE_Pressed, this, &AUEFighterCharacter::StartAttack3);
-	PlayerInputComponent->BindAction("Attack4", IE_Pressed, this, &AUEFighterCharacter::StartAttack4);*/
-
+	PlayerInputComponent->BindAction("Attack4", IE_Pressed, this, &AUEFighterCharacter::StartAttack4);
 
 	PlayerInputComponent->BindTouch(IE_Pressed, this, &AUEFighterCharacter::TouchStarted);
 	PlayerInputComponent->BindTouch(IE_Released, this, &AUEFighterCharacter::TouchStopped);
 
-	
-
-	if (mAbilitySystemComponent && InputComponent)
+	/*if (mAbilitySystemComponent && InputComponent)
 	{
 		const FGameplayAbilityInputBinds binds("Confirm", "Cancel", "EGASAbilityInputID", static_cast<int32>(EGASAbilityInputID::Confirm), static_cast<int32>(EGASAbilityInputID::Cancel));
 		mAbilitySystemComponent->BindAbilityActivationToInputComponent(InputComponent, binds);
-	}
+	}*/
 }
 
 void AUEFighterCharacter::PossessedBy(AController* NewController)
@@ -125,11 +123,11 @@ void AUEFighterCharacter::OnRep_PlayerState()
 	mAbilitySystemComponent->InitAbilityActorInfo(this, this);
 	InitializeAttributes();
 
-	if (mAbilitySystemComponent && InputComponent)
+	/*if (mAbilitySystemComponent && InputComponent)
 	{
 		const FGameplayAbilityInputBinds binds("Confirm", "Cancel", "EGASAbilityInputID", static_cast<int32>(EGASAbilityInputID::Confirm), static_cast<int32>(EGASAbilityInputID::Cancel));
 		mAbilitySystemComponent->BindAbilityActivationToInputComponent(InputComponent, binds);
-	}
+	}*/
 }
 
 void AUEFighterCharacter::GiveAbilities()
