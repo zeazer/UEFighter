@@ -57,6 +57,7 @@ AUEFighterCharacter::AUEFighterCharacter()
 	mPlayerHealth = 1.f;
 	mMaxDistanceApart = 800.f;
 	mCanCombo = false;
+	mPlayerNumber = 0;
 }
 
 void AUEFighterCharacter::BeginPlay()
@@ -70,19 +71,33 @@ void AUEFighterCharacter::BeginPlay()
 void AUEFighterCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent)
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
+	if (auto* gameInstance = Cast<UUEFighterGameInstance>(GetGameInstance()))
+	{
+		//if (gameInstance->mPlayer1 == this)
+		//{
+		PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ACharacter::Jump);
+		PlayerInputComponent->BindAction("Jump", IE_Released, this, &ACharacter::StopJumping);
+		PlayerInputComponent->BindAxis("MoveRight", this, &AUEFighterCharacter::MoveRight);
+		PlayerInputComponent->BindAxis("MoveRightController", this, &AUEFighterCharacter::MoveRight);
 
-	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ACharacter::Jump);
-	PlayerInputComponent->BindAction("Jump", IE_Released, this, &ACharacter::StopJumping);
-	PlayerInputComponent->BindAxis("MoveRight", this, &AUEFighterCharacter::MoveRight);
+		PlayerInputComponent->BindAction("Attack1", IE_Pressed, this, &AUEFighterCharacter::StartAttack1);
+		PlayerInputComponent->BindAction("Attack2", IE_Pressed, this, &AUEFighterCharacter::StartAttack2);
+		PlayerInputComponent->BindAction("Attack3", IE_Pressed, this, &AUEFighterCharacter::StartAttack3);
+		PlayerInputComponent->BindAction("Attack4", IE_Pressed, this, &AUEFighterCharacter::StartAttack4);
+		//}
+		/*else if (gameInstance->mPlayer2 == this)
+		{
+			PlayerInputComponent->BindAction("P2Jump", IE_Pressed, this, &ACharacter::Jump);
+			PlayerInputComponent->BindAction("P2Jump", IE_Released, this, &ACharacter::StopJumping);
+			PlayerInputComponent->BindAxis("P2MoveRight", this, &AUEFighterCharacter::MoveRight);
 
-	PlayerInputComponent->BindAction("Attack1", IE_Pressed, this, &AUEFighterCharacter::StartAttack1);
-	PlayerInputComponent->BindAction("Attack2", IE_Pressed, this, &AUEFighterCharacter::StartAttack2);
-	PlayerInputComponent->BindAction("Attack3", IE_Pressed, this, &AUEFighterCharacter::StartAttack3);
-	PlayerInputComponent->BindAction("Attack4", IE_Pressed, this, &AUEFighterCharacter::StartAttack4);
+			PlayerInputComponent->BindAction("P2Attack1", IE_Pressed, this, &AUEFighterCharacter::StartAttack1);
+			PlayerInputComponent->BindAction("P2Attack2", IE_Pressed, this, &AUEFighterCharacter::StartAttack2);
+			PlayerInputComponent->BindAction("P2Attack3", IE_Pressed, this, &AUEFighterCharacter::StartAttack3);
+			PlayerInputComponent->BindAction("P2Attack4", IE_Pressed, this, &AUEFighterCharacter::StartAttack4);
+		}*/
 
-	PlayerInputComponent->BindTouch(IE_Pressed, this, &AUEFighterCharacter::TouchStarted);
-	PlayerInputComponent->BindTouch(IE_Released, this, &AUEFighterCharacter::TouchStopped);
-
+	}
 	/*if (mAbilitySystemComponent && InputComponent)
 	{
 		const FGameplayAbilityInputBinds binds("Confirm", "Cancel", "EGASAbilityInputID", static_cast<int32>(EGASAbilityInputID::Confirm), static_cast<int32>(EGASAbilityInputID::Cancel));
@@ -216,7 +231,6 @@ void AUEFighterCharacter::SpawnHurtbox()
 
 void AUEFighterCharacter::MoveRight(float Value)
 {
-
 	if (Value > 0.2f)
 	{
 		mDirectionalInput = EDirectionalInput::VE_MovingRight;

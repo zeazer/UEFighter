@@ -5,10 +5,12 @@
 #include "UObject/ConstructorHelpers.h"
 #include "Kismet/GameplayStatics.h"
 #include "UEFighterGameInstance.h"
+#include "UEFighterController.h"
 
 AUEFighterGameMode::AUEFighterGameMode()
 {
 	DefaultPawnClass = NULL;
+	PlayerControllerClass = AUEFighterController::StaticClass();
 }
 
 void AUEFighterGameMode::BeginPlay()

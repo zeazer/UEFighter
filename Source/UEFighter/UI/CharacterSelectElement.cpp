@@ -8,7 +8,7 @@
 void UCharacterSelectElement::OnClick()
 {
 	auto* gameInstance = Cast<UUEFighterGameInstance>(GetGameInstance());
-	gameInstance->mPlayer1CharacterChoice = mCharacterClassType;
+	gameInstance->mPlayerDetails[0].mPlayerCharacterChoice = mCharacterClassType;
 
 	gameInstance->SwitchToLevelWithName(TEXT("InGame"), TEXT("UEFighterMap"));
 }

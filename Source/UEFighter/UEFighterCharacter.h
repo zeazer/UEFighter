@@ -109,10 +109,20 @@ protected:
 
 	float mFaceDirection;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Hitbox")
+	int mPlayerNumber;
+
 #pragma region Attacks
+	UFUNCTION(BlueprintCallable)
 	void StartAttack1();
+
+	UFUNCTION(BlueprintCallable)
 	void StartAttack2();
+
+	UFUNCTION(BlueprintCallable)
 	void StartAttack3();
+
+	UFUNCTION(BlueprintCallable)
 	void StartAttack4();
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Attacks")

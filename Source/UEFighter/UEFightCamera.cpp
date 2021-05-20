@@ -12,6 +12,8 @@
 AUEFightCamera::AUEFightCamera()
 {
 	PrimaryActorTick.bCanEverTick = true;
+	mPivotActor1 = nullptr;
+	mPivotActor2 = nullptr;
 }
 
 void AUEFightCamera::BeginPlay()
@@ -26,12 +28,9 @@ void AUEFightCamera::Tick(float DeltaSeconds)
 
 	if (mPivotActor1 && mPivotActor2)
 	{
-		FVector pivotLocationSum;
+		FVector pivotLocationSum = mPivotActor1->GetActorLocation() + mPivotActor2->GetActorLocation();
 
-		pivotLocationSum += mPivotActor1->GetActorLocation();
-		pivotLocationSum += mPivotActor2->GetActorLocation();
-
-		auto location = GetActorLocation();
+		FVector location = GetActorLocation();
 		location.Y = pivotLocationSum.Y;
 		location.Y /= 2.0f;
 		location.Z = pivotLocationSum.Z;
@@ -51,10 +50,10 @@ void AUEFightCamera::Tick(float DeltaSeconds)
 void AUEFightCamera::SetPivotActors()
 {
 	auto* gameInstance = Cast<UUEFighterGameInstance>(GetGameInstance());
-	if (gameInstance->mPlayer1 && gameInstance->mPlayer2)
+	if (gameInstance->mPlayers.Num() >= 2 && gameInstance->mPlayers[0] && gameInstance->mPlayers[1])
 	{
-		mPivotActor1 = gameInstance->mPlayer1;
-		mPivotActor2 = gameInstance->mPlayer2;
+		mPivotActor1 = gameInstance->mPlayers[0];
+		mPivotActor2 = gameInstance->mPlayers[1];
 	}
 	else
 	{

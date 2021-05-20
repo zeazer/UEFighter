@@ -9,16 +9,17 @@
 #include "UEFighterCharacter.h"
 #include "GameFramework/PlayerStart.h"
 #include "UEFightCamera.h"
+#include "UEFighterController.h"
 
 UUEFighterGameInstance::UUEFighterGameInstance(const FObjectInitializer& ObjectInitializer)
 {
 	mCurrentActiveWidget = nullptr;
-	mPlayer1CharacterChoice = ECharacterClass::SwatFighter;
-	mPlayer2CharacterChoice = ECharacterClass::SwatFighter;
+	mNumberOfPlayers = 2;
+	mIsDeviceUsedForMultiplePlayers = false;
 	LoadCharacterClass(TEXT("/Game/UEFighter/Blueprints/UEFighterCharacter_BP"));
 	LoadCharacterClass(TEXT("/Game/UEFighter/Blueprints/SwatFighterCharacter_BP"));
 	LoadCharacterClass(TEXT("/Game/UEFighter/Blueprints/MutantFighterCharacter_BP"));
-
+	mPlayerDetails.Init(FPlayerDetails(), mNumberOfPlayers);
 
 	static ConstructorHelpers::FClassFinder<UMenuBase> inGameWIdget(TEXT("WidgetBlueprint'/Game/UEFighter/UI/PlayerHUD.PlayerHUD_C'"));
 	if (inGameWIdget.Succeeded())
@@ -81,7 +82,7 @@ void UUEFighterGameInstance::SwitchToLevelWithName(const FString& name, const FS
 
 bool UUEFighterGameInstance::IsLevelTransfereAvailable()
 {
-	return mLoadedCharacterClasses.Contains(mPlayer1CharacterChoice); /*&& mLoadedCharacterClasses.Contains(mPlayer2CharacterChoice)*/ // Will be needed when player 2 is implemented to full extent.
+	return mLoadedCharacterClasses.Contains(mPlayerDetails[0].mPlayerCharacterChoice); /*&& mLoadedCharacterClasses.Contains(mPlayer2CharacterChoice)*/ // Will be needed when player 2 is implemented to full extent.
 }
 
 void UUEFighterGameInstance::ShowWidget()
@@ -114,31 +115,45 @@ void UUEFighterGameInstance::RemoveCurrentWidget()
 	mCurrentActiveWidget = nullptr;
 }
 
+AUEFighterCharacter* UUEFighterGameInstance::GetPlayer(int32 index)
+{
+	return mPlayers[index];
+}
+
 void UUEFighterGameInstance::SpawnPlayers(UWorld* world)
 {
+	mPlayers.Empty();
+
 	TArray<AActor*> actors;
 	UGameplayStatics::GetAllActorsOfClass(GetWorld(), APlayerStart::StaticClass(), actors);
-	for (auto* actor : actors)
+	for (int index = 0; index < actors.Num(); index++)
 	{
-		if (auto* playerStart = Cast<APlayerStart>(actor))
+		if (auto* playerStart = Cast<APlayerStart>(actors[index]))
 		{
-			if (playerStart->PlayerStartTag == TEXT("P1"))
-			{
-				mPlayer1 = DetermineCharacterClass(playerStart->GetTransform(), mPlayer1CharacterChoice, world);
-				if (auto* controller = UGameplayStatics::GetPlayerController(world, 0))
-				{
-					controller->Possess(mPlayer1);
-				}
-			}
-			else if (playerStart->PlayerStartTag == TEXT("P2"))
-			{
-				mPlayer2 = DetermineCharacterClass(playerStart->GetTransform(), mPlayer2CharacterChoice, world);
-				if (auto* controller = UGameplayStatics::GetPlayerController(world, 1))
-				{
-					controller->Possess(mPlayer2);
-				}
-			}
+			mPlayers.Emplace();
+			mPlayers[index] = DetermineCharacterClass(playerStart->GetTransform(), mPlayerDetails[index].mPlayerCharacterChoice, world);
+			PossessPlayer(mPlayers[index], world, index);
 		}
+	}
+}
+
+void UUEFighterGameInstance::PossessPlayer(AUEFighterCharacter* characterRef, UWorld* world, int32 playerIndex)
+{
+	if (playerIndex == 0)
+	{
+		auto* controller = UGameplayStatics::GetPlayerController(world, playerIndex);
+		controller->Possess(characterRef);
+	}
+	else if (mIsDeviceUsedForMultiplePlayers)
+	{
+		FActorSpawnParameters spawnInfo;
+		auto* controller = world->SpawnActor<AUEFighterController>(AUEFighterController::StaticClass(), characterRef->GetTransform(), spawnInfo);
+		controller->Possess(characterRef);
+	}
+	else
+	{
+		auto* controller = UGameplayStatics::CreatePlayer(world);
+		controller->Possess(characterRef);
 	}
 }
 
