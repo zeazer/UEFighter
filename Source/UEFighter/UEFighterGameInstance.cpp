@@ -117,7 +117,15 @@ void UUEFighterGameInstance::RemoveCurrentWidget()
 
 AUEFighterCharacter* UUEFighterGameInstance::GetPlayer(int32 index)
 {
-	return mPlayers[index];
+	if (index >= 0 && index < mPlayers.Num())
+	{
+		return mPlayers[index];
+
+	}
+	else
+	{
+		return nullptr;
+	}
 }
 
 void UUEFighterGameInstance::SpawnPlayers(UWorld* world)
@@ -126,7 +134,7 @@ void UUEFighterGameInstance::SpawnPlayers(UWorld* world)
 
 	TArray<AActor*> actors;
 	UGameplayStatics::GetAllActorsOfClass(GetWorld(), APlayerStart::StaticClass(), actors);
-	for (int index = 0; index < actors.Num(); index++)
+	for (int index = 0; index < 1; index++)
 	{
 		if (auto* playerStart = Cast<APlayerStart>(actors[index]))
 		{

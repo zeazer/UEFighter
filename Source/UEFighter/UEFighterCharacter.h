@@ -13,7 +13,8 @@ enum class EDirectionalInput : uint8
 {
 	VE_Default			UMETA(DisplayName = "NOT_MOVING"),
 	VE_MovingRight		UMETA(DisplayName = "MOVING_RIGHT"),
-	VE_MovingLeft		UMETA(DisplayName = "MOVING_LEFT")
+	VE_MovingLeft		UMETA(DisplayName = "MOVING_LEFT"),
+	VE_Jumping			UMETA(DisplayName = "JUMPING")
 };
 
 UENUM(BlueprintType)
@@ -37,8 +38,31 @@ public:
 
 	virtual void BeginPlay() override;
 
+	void StartJump();
+
+	virtual void Jump() override;
+	virtual void StopJumping() override;
+	virtual void Landed(const FHitResult& Hit) override;
+
+	UFUNCTION(BlueprintCallable)
+	void StartCrouch();
+	UFUNCTION(BlueprintCallable)
+	void StopCrouch();
+
 	UFUNCTION(BlueprintCallable)
 	void TakeAbilityDamage(float damageAmount);
+
+	UFUNCTION(BlueprintCallable)
+	void LockMovement();
+
+	UFUNCTION(BlueprintCallable)
+	void UnlockMovement();
+
+	UFUNCTION(BlueprintCallable)
+	void LockAnimation();
+
+	UFUNCTION(BlueprintCallable)
+	void UnlockAnimation();
 
 	//FORCEINLINE class UCameraComponent* GetSideViewCameraComponent() const { return SideViewCameraComponent; }
 	//
@@ -109,8 +133,17 @@ protected:
 
 	float mFaceDirection;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Hitbox")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player")
 	int mPlayerNumber;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player")
+	bool mIsCrouching;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player")
+	bool mCanMove;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player")
+	bool mIsAnimationLocked;
 
 #pragma region Attacks
 	UFUNCTION(BlueprintCallable)

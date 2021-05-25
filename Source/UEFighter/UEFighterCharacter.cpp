@@ -40,7 +40,7 @@ AUEFighterCharacter::AUEFighterCharacter()
 	GetCharacterMovement()->RotationRate = FRotator(0.0f, 720.0f, 0.0f);
 	GetCharacterMovement()->GravityScale = 2.f;
 	GetCharacterMovement()->AirControl = 0.80f;
-	GetCharacterMovement()->JumpZVelocity = 1000.f;
+	GetCharacterMovement()->JumpZVelocity = 500.f;
 	GetCharacterMovement()->GroundFriction = 3.f;
 	GetCharacterMovement()->MaxWalkSpeed = 600.f;
 	GetCharacterMovement()->MaxFlySpeed = 600.f;
@@ -58,6 +58,8 @@ AUEFighterCharacter::AUEFighterCharacter()
 	mMaxDistanceApart = 800.f;
 	mCanCombo = false;
 	mPlayerNumber = 0;
+	mCanMove = true;
+	mIsCrouching = false;
 }
 
 void AUEFighterCharacter::BeginPlay()
@@ -65,6 +67,40 @@ void AUEFighterCharacter::BeginPlay()
 	Super::BeginPlay();
 	Cast<UUEFighterGameInstance>(GetGameInstance())->PushMenu(EMenuType::InGameHUD);
 	SpawnHurtbox();
+}
+
+void AUEFighterCharacter::StartJump()
+{
+	if (mCanMove)
+	{
+		mDirectionalInput = EDirectionalInput::VE_Jumping;
+	}
+}
+
+void AUEFighterCharacter::Jump()
+{
+	ACharacter::Jump();
+}
+
+void AUEFighterCharacter::StopJumping()
+{
+	ACharacter::StopJumping();
+}
+
+void AUEFighterCharacter::Landed(const FHitResult& Hit)
+{
+	ACharacter::Landed(Hit);
+	mDirectionalInput = EDirectionalInput::VE_Default;
+}
+
+void AUEFighterCharacter::StartCrouch()
+{
+	mIsCrouching = true;
+}
+
+void AUEFighterCharacter::StopCrouch()
+{
+	mIsCrouching = false;
 }
 
 
@@ -75,10 +111,13 @@ void AUEFighterCharacter::SetupPlayerInputComponent(class UInputComponent* Playe
 	{
 		//if (gameInstance->mPlayer1 == this)
 		//{
-		PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ACharacter::Jump);
-		PlayerInputComponent->BindAction("Jump", IE_Released, this, &ACharacter::StopJumping);
+		PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &AUEFighterCharacter::StartJump);
+		PlayerInputComponent->BindAction("Jump", IE_Released, this, &AUEFighterCharacter::StopJumping);
+		PlayerInputComponent->BindAction("Crouch", IE_Pressed, this, &AUEFighterCharacter::StartCrouch);
+		PlayerInputComponent->BindAction("Crouch", IE_Released, this, &AUEFighterCharacter::StopCrouch);
+
 		PlayerInputComponent->BindAxis("MoveRight", this, &AUEFighterCharacter::MoveRight);
-		PlayerInputComponent->BindAxis("MoveRightController", this, &AUEFighterCharacter::MoveRight);
+		//PlayerInputComponent->BindAxis("MoveRightController", this, &AUEFighterCharacter::MoveRight);
 
 		PlayerInputComponent->BindAction("Attack1", IE_Pressed, this, &AUEFighterCharacter::StartAttack1);
 		PlayerInputComponent->BindAction("Attack2", IE_Pressed, this, &AUEFighterCharacter::StartAttack2);
@@ -172,6 +211,26 @@ void AUEFighterCharacter::TakeAbilityDamage(float damageAmount)
 	}
 }
 
+void AUEFighterCharacter::LockMovement()
+{
+	mCanMove = false;
+}
+
+void AUEFighterCharacter::UnlockMovement()
+{
+	mCanMove = true;
+}
+
+void AUEFighterCharacter::UnlockAnimation()
+{
+}
+
+void AUEFighterCharacter::LockAnimation()
+{
+	mIsAnimationLocked = true;
+	mIsAnimationLocked = false;
+}
+
 void AUEFighterCharacter::FlipCharacter(int scaleValue)
 {
 	if (auto* capsuleComponent = GetCapsuleComponent()->GetChildComponent(1))
@@ -231,24 +290,30 @@ void AUEFighterCharacter::SpawnHurtbox()
 
 void AUEFighterCharacter::MoveRight(float Value)
 {
-	if (Value > 0.2f)
+	if (mCanMove && !mIsCrouching)
 	{
-		mDirectionalInput = EDirectionalInput::VE_MovingRight;
-	}
-	else if (Value < -0.2f)
-	{
-		mDirectionalInput = EDirectionalInput::VE_MovingLeft;
-	}
-	else
-	{
-		mDirectionalInput = EDirectionalInput::VE_Default;
-	}
+		if (mDirectionalInput != EDirectionalInput::VE_Jumping)
+		{
+			if (Value > 0.2f)
+			{
+				mDirectionalInput = EDirectionalInput::VE_MovingRight;
+			}
+			else if (Value < -0.2f)
+			{
+				mDirectionalInput = EDirectionalInput::VE_MovingLeft;
+			}
+			else
+			{
+				mDirectionalInput = EDirectionalInput::VE_Default;
+			}
+		}
 
-	if (Value >= 1 || Value <= -1)
-	{
-		FlipCharacter(Value);
+		if (Value >= 1 || Value <= -1)
+		{
+			FlipCharacter(Value);
+		}
+		AddMovementInput(FVector(0.f, -1.f, 0.f), Value);
 	}
-	AddMovementInput(FVector(0.f, -1.f, 0.f), Value);
 }
 
 void AUEFighterCharacter::TouchStarted(const ETouchIndex::Type FingerIndex, const FVector Location)
