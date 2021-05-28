@@ -13,6 +13,10 @@ AHitboxActor::AHitboxActor()
 	PrimaryActorTick.bCanEverTick = true;
 	RootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("Root"));
 
+	mHitboxDamage = 0.f;
+	mHitstunTIme = 0.f;
+	mBlockstunTime = 0.f;
+
 	mHitboxMeshComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("HitboxMesh"));
 	if (mHitboxMeshComponent)
 	{
@@ -23,7 +27,7 @@ AHitboxActor::AHitboxActor()
 	}
 }
 
-void AHitboxActor::SpawnHitbox(const FVector& hitboxLocation, float hitboxDamage, float hitboxOffsetValue)
+void AHitboxActor::SpawnHitbox(const FVector& hitboxLocation, float hitboxDamage, float hitboxOffsetValue, float stunTime)
 {
 	if (mHitboxMeshComponent && GetOwner())
 	{
@@ -48,11 +52,11 @@ void AHitboxActor::SpawnHitbox(const FVector& hitboxLocation, float hitboxDamage
 		
 		mHitboxMeshComponent->SetWorldLocation(mHitboxLocation);
 		mHitboxMeshComponent->SetVisibility(true);
-		CheckCollision(hitboxDamage);
+		CheckCollision(hitboxDamage, stunTime);
 	}
 }
 
-void AHitboxActor::CheckCollision(float hitboxDamage)
+void AHitboxActor::CheckCollision(float hitboxDamage, float stunTime)
 {
 	if (HasAuthority())
 	{
@@ -70,7 +74,7 @@ void AHitboxActor::CheckCollision(float hitboxDamage)
 					auto* playerChar = Cast<AUEFighterCharacter>(hurtbox->GetOwner());
 					if (playerChar)
 					{
-						playerChar->TakeAbilityDamage(hitboxDamage);
+						playerChar->TakeAbilityDamage(hitboxDamage, stunTime);
 					}
 				}
 			}

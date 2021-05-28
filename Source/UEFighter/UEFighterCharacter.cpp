@@ -13,6 +13,7 @@
 #include "GAS/GASAttributeSet.h"
 #include "GAS/GASGameplayAbility.h"
 #include <GameplayEffect.h>
+#include "TimerManager.h"
 
 AUEFighterCharacter::AUEFighterCharacter()
 {
@@ -59,6 +60,7 @@ AUEFighterCharacter::AUEFighterCharacter()
 	mCanCombo = false;
 	mPlayerNumber = 0;
 	mCanMove = true;
+	mStunTime = 0.f;
 }
 
 void AUEFighterCharacter::BeginPlay()
@@ -90,6 +92,17 @@ void AUEFighterCharacter::Landed(const FHitResult& Hit)
 {
 	ACharacter::Landed(Hit);
 	mCharacterState = ECharacterState::VE_Default;
+}
+
+void AUEFighterCharacter::BeginStun()
+{
+	GetWorldTimerManager().SetTimer(mStunTimerHandle, this, &AUEFighterCharacter::EndStun, mStunTime, false);
+	mCanMove = false;
+}
+
+void AUEFighterCharacter::EndStun()
+{
+	mCanMove = true;
 }
 
 void AUEFighterCharacter::StartCrouch()
@@ -201,9 +214,14 @@ UAbilitySystemComponent* AUEFighterCharacter::GetAbilitySystemComponent() const
 	return mAbilitySystemComponent;
 }
 
-void AUEFighterCharacter::TakeAbilityDamage(float damageAmount)
+void AUEFighterCharacter::TakeAbilityDamage(float damageAmount, float stunTime)
 {
 	mPlayerHealth -= damageAmount;
+
+	mCharacterState = ECharacterState::VE_Stunned;
+	mStunTime = stunTime;
+	BeginStun();
+
 	if (mPlayerHealth < 0.0f)
 	{
 		mPlayerHealth = 0.0f;

@@ -29,7 +29,7 @@ enum class EAttack : uint8
 	VE_COUNT
 };
 
-UCLASS(config=Game)
+UCLASS(config = Game)
 class AUEFighterCharacter : public ACharacter, public IAbilitySystemInterface
 {
 	GENERATED_BODY()
@@ -47,12 +47,18 @@ public:
 	virtual void Landed(const FHitResult& Hit) override;
 
 	UFUNCTION(BlueprintCallable)
+	void BeginStun();
+	UFUNCTION(BlueprintCallable)
+	void EndStun();
+
+	UFUNCTION(BlueprintCallable)
 	void StartCrouch();
+
 	UFUNCTION(BlueprintCallable)
 	void StopCrouch();
 
 	UFUNCTION(BlueprintCallable)
-	void TakeAbilityDamage(float damageAmount);
+	void TakeAbilityDamage(float damageAmount, float stunTime);
 
 	UFUNCTION(BlueprintCallable)
 	void LockMovement();
@@ -86,10 +92,18 @@ public:
 	//UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	//class USpringArmComponent* CameraBoom;
 
+#pragma region Getters
+	UFUNCTION(BlueprintCallable)
+	const ECharacterClass& GetCharacterClass() { return mCharacterClass; }
+
+	UFUNCTION(BlueprintCallable)
+	const ECharacterState& GetCharacterState() { return mCharacterState; }
+#pragma endregion
+
+protected:
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Game, meta = (AllowPrivateAccess = "true"))
 	class UGASComponent* mAbilitySystemComponent;
-
-
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character")
 	ECharacterClass mCharacterClass;
@@ -97,7 +111,10 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
 	ECharacterState mCharacterState;
 
-protected:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
+	float mStunTime;
+	FTimerHandle mStunTimerHandle;
+
 
 	/** Called for side to side input */
 	void MoveRight(float Val);

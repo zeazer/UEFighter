@@ -33,10 +33,10 @@ public:
 	void VisualizeHitbox();
 
 	UFUNCTION(BlueprintCallable)
-	void SpawnHitbox(const FVector& hitboxLocation, const float hitboxDamage, const float hitboxOffsetValue);
+	void SpawnHitbox(const FVector& hitboxLocation, const float hitboxDamage, const float hitboxOffsetValue, float stunTime);
 
 	UFUNCTION(BlueprintCallable)
-	void CheckCollision(const float hitboxDamage);
+	void CheckCollision(const float hitboxDamage, float stunTime);
 
 	UPROPERTY(EditAnywhere)
 	UStaticMeshComponent* mHitboxMeshComponent;
@@ -53,7 +53,26 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Hitbox")
 	EHitboxType mHitboxType;
 
+#pragma region Getters
+	UFUNCTION(BlueprintCallable)
+	float GetHitBoxDamage() {return mHitboxDamage;}
+
+	UFUNCTION(BlueprintCallable)
+	float GetHitstunTIme() { return mHitstunTIme; }
+
+	UFUNCTION(BlueprintCallable)
+	float GetBlockstunTime() { return mBlockstunTime; }
+#pragma endregion
+
 protected:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Hitbox")
+	float mHitboxDamage;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Hitbox")
+	float mHitstunTIme;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Hitbox")
+	float mBlockstunTime;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Hitbox")
 	FVector mHitboxLocation;
