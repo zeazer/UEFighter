@@ -9,12 +9,14 @@
 #include "UEFighterCharacter.generated.h"
 
 UENUM(BlueprintType)
-enum class EDirectionalInput : uint8
+enum class ECharacterState : uint8
 {
 	VE_Default			UMETA(DisplayName = "NOT_MOVING"),
-	VE_MovingRight		UMETA(DisplayName = "MOVING_RIGHT"),
-	VE_MovingLeft		UMETA(DisplayName = "MOVING_LEFT"),
-	VE_Jumping			UMETA(DisplayName = "JUMPING")
+	VE_Moving		UMETA(DisplayName = "MOVING"),
+	VE_Crouching		UMETA(DisplayName = "CROUCHING"),
+	VE_Jumping			UMETA(DisplayName = "JUMPING"),
+	VE_Stunned			UMETA(DisplayName = "STUNNED"),
+	VE_Blocking			UMETA(DisplayName = "BLOCKING")
 };
 
 UENUM(BlueprintType)
@@ -93,7 +95,7 @@ public:
 	ECharacterClass mCharacterClass;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
-	EDirectionalInput mDirectionalInput;
+	ECharacterState mCharacterState;
 
 protected:
 
@@ -135,9 +137,6 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player")
 	int mPlayerNumber;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player")
-	bool mIsCrouching;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player")
 	bool mCanMove;

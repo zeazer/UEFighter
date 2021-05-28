@@ -59,7 +59,6 @@ AUEFighterCharacter::AUEFighterCharacter()
 	mCanCombo = false;
 	mPlayerNumber = 0;
 	mCanMove = true;
-	mIsCrouching = false;
 }
 
 void AUEFighterCharacter::BeginPlay()
@@ -73,7 +72,7 @@ void AUEFighterCharacter::StartJump()
 {
 	if (mCanMove)
 	{
-		mDirectionalInput = EDirectionalInput::VE_Jumping;
+		mCharacterState = ECharacterState::VE_Jumping;
 	}
 }
 
@@ -90,17 +89,17 @@ void AUEFighterCharacter::StopJumping()
 void AUEFighterCharacter::Landed(const FHitResult& Hit)
 {
 	ACharacter::Landed(Hit);
-	mDirectionalInput = EDirectionalInput::VE_Default;
+	mCharacterState = ECharacterState::VE_Default;
 }
 
 void AUEFighterCharacter::StartCrouch()
 {
-	mIsCrouching = true;
+	mCharacterState = ECharacterState::VE_Crouching;
 }
 
 void AUEFighterCharacter::StopCrouch()
 {
-	mIsCrouching = false;
+	mCharacterState = ECharacterState::VE_Default;
 }
 
 
@@ -223,12 +222,12 @@ void AUEFighterCharacter::UnlockMovement()
 
 void AUEFighterCharacter::UnlockAnimation()
 {
+	mIsAnimationLocked = false;
 }
 
 void AUEFighterCharacter::LockAnimation()
 {
 	mIsAnimationLocked = true;
-	mIsAnimationLocked = false;
 }
 
 void AUEFighterCharacter::FlipCharacter(int scaleValue)
@@ -290,21 +289,21 @@ void AUEFighterCharacter::SpawnHurtbox()
 
 void AUEFighterCharacter::MoveRight(float Value)
 {
-	if (mCanMove && !mIsCrouching)
+	if (mCanMove && mCharacterState  != ECharacterState::VE_Crouching)
 	{
-		if (mDirectionalInput != EDirectionalInput::VE_Jumping)
+		if (mCharacterState != ECharacterState::VE_Jumping)
 		{
 			if (Value > 0.2f)
 			{
-				mDirectionalInput = EDirectionalInput::VE_MovingRight;
+				mCharacterState = ECharacterState::VE_Moving;
 			}
 			else if (Value < -0.2f)
 			{
-				mDirectionalInput = EDirectionalInput::VE_MovingLeft;
+				mCharacterState = ECharacterState::VE_Moving;
 			}
 			else
 			{
-				mDirectionalInput = EDirectionalInput::VE_Default;
+				mCharacterState = ECharacterState::VE_Default;
 			}
 		}
 

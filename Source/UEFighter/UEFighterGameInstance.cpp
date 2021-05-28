@@ -134,7 +134,7 @@ void UUEFighterGameInstance::SpawnPlayers(UWorld* world)
 
 	TArray<AActor*> actors;
 	UGameplayStatics::GetAllActorsOfClass(GetWorld(), APlayerStart::StaticClass(), actors);
-	for (int index = 0; actors.Num() < 1; index++)
+	for (int index = 0; index < actors.Num(); index++)
 	{
 		if (auto* playerStart = Cast<APlayerStart>(actors[index]))
 		{

@@ -11,5 +11,5 @@ AHurtbox::AHurtbox()
 	RootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("RootComponent"));
 
 	mHurtboxDisplay = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("HurtboxDisplay"));
-	mHurtboxDisplay->AttachTo(this->RootComponent);
+	mHurtboxDisplay->SetupAttachment(this->RootComponent);
 }
