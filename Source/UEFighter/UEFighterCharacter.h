@@ -12,19 +12,20 @@ UENUM(BlueprintType)
 enum class ECharacterState : uint8
 {
 	VE_Default			UMETA(DisplayName = "NOT_MOVING"),
-	VE_Moving		UMETA(DisplayName = "MOVING"),
+	VE_Moving			UMETA(DisplayName = "MOVING"),
 	VE_Crouching		UMETA(DisplayName = "CROUCHING"),
 	VE_Jumping			UMETA(DisplayName = "JUMPING"),
 	VE_Stunned			UMETA(DisplayName = "STUNNED"),
-	VE_Blocking			UMETA(DisplayName = "BLOCKING")
+	VE_Blocking			UMETA(DisplayName = "BLOCKING"),
+	VE_Launched			UMETA(DisplayName = "LAUNCHED")
 };
 
 UENUM(BlueprintType)
 enum class EAttack : uint8
 {
 	VE_LightAttack			UMETA(DisplayName = "LIGHT_ATTACK"),
-	VE_MediumAttack		UMETA(DisplayName = "MEDIUM_ATTACK"),
-	VE_HeavyAttack		UMETA(DisplayName = "HEAVY_ATTACK"),
+	VE_MediumAttack			UMETA(DisplayName = "MEDIUM_ATTACK"),
+	VE_HeavyAttack			UMETA(DisplayName = "HEAVY_ATTACK"),
 	VE_SpecialAttack		UMETA(DisplayName = "SPECIAL_ATTACK"),
 	VE_COUNT
 };
@@ -47,9 +48,19 @@ public:
 	virtual void Landed(const FHitResult& Hit) override;
 
 	UFUNCTION(BlueprintCallable)
+	void ResetAttacks();
+
+	UFUNCTION(BlueprintCallable)
 	void BeginStun();
+
 	UFUNCTION(BlueprintCallable)
 	void EndStun();
+
+	UFUNCTION(BlueprintCallable)
+	void StartBlocking();
+
+	UFUNCTION(BlueprintCallable)
+	void StopBlocking();
 
 	UFUNCTION(BlueprintCallable)
 	void StartCrouch();
@@ -58,7 +69,9 @@ public:
 	void StopCrouch();
 
 	UFUNCTION(BlueprintCallable)
-	void TakeAbilityDamage(float damageAmount, float stunTime);
+	void TakeAbilityDamage(AUEFighterCharacter* damageInstigator, const float damageAmount, const float stunTime, const float blockstunTime, const float pushbackAmount, const float launchAmount);
+
+	void PerformPushback(const float pushbackAmount, const float launchAmount, const float direction, bool hasBlocked);
 
 	UFUNCTION(BlueprintCallable)
 	void LockMovement();
@@ -92,12 +105,15 @@ public:
 	//UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	//class USpringArmComponent* CameraBoom;
 
-#pragma region Getters
+#pragma region Getters/Setters
 	UFUNCTION(BlueprintCallable)
 	const ECharacterClass& GetCharacterClass() { return mCharacterClass; }
 
 	UFUNCTION(BlueprintCallable)
 	const ECharacterState& GetCharacterState() { return mCharacterState; }
+
+	UFUNCTION(BlueprintCallable)
+	float GetPlayerHealth() { return mPlayerHealth; }
 #pragma endregion
 
 protected:
@@ -115,6 +131,8 @@ protected:
 	float mStunTime;
 	FTimerHandle mStunTimerHandle;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
+	float mGravityScale;
 
 	/** Called for side to side input */
 	void MoveRight(float Val);
@@ -160,6 +178,8 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player")
 	bool mIsAnimationLocked;
+
+	
 
 #pragma region Attacks
 	UFUNCTION(BlueprintCallable)

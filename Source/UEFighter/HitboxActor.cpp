@@ -13,10 +13,6 @@ AHitboxActor::AHitboxActor()
 	PrimaryActorTick.bCanEverTick = true;
 	RootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("Root"));
 
-	mHitboxDamage = 0.f;
-	mHitstunTIme = 0.f;
-	mBlockstunTime = 0.f;
-
 	mHitboxMeshComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("HitboxMesh"));
 	if (mHitboxMeshComponent)
 	{
@@ -27,11 +23,12 @@ AHitboxActor::AHitboxActor()
 	}
 }
 
-void AHitboxActor::SpawnHitbox(const FVector& hitboxLocation, float hitboxDamage, float hitboxOffsetValue, float stunTime)
+void AHitboxActor::SpawnHitbox(const FHitBoxData& hitboxData)
 {
+	mHitboxData = hitboxData;
 	if (mHitboxMeshComponent && GetOwner())
 	{
-		switch (mHitboxType)
+		switch (mHitboxData.hitboxType)
 		{
 		case EHitboxType::HB_PROXIMITY:
 			mHitboxMeshComponent->SetMaterial(0, mGreenMaterial);
@@ -47,16 +44,16 @@ void AHitboxActor::SpawnHitbox(const FVector& hitboxLocation, float hitboxDamage
 
 		auto* owner = Cast<AUEFighterCharacter>(GetOwner());
 		auto direction = owner->GetFaceDirection();
-		mHitboxLocation = hitboxLocation;
-		mHitboxLocation.Y -= hitboxOffsetValue * direction;
-		
-		mHitboxMeshComponent->SetWorldLocation(mHitboxLocation);
+		FVector tempHitboxLocation = mHitboxData.hitboxLocation;
+		tempHitboxLocation.Y -= mHitboxData.hitboxOffsetValue * direction;
+
+		mHitboxMeshComponent->SetWorldLocation(tempHitboxLocation);
 		mHitboxMeshComponent->SetVisibility(true);
-		CheckCollision(hitboxDamage, stunTime);
+		CheckCollision(mHitboxData.hitboxDamage, mHitboxData.hitStunTime, mHitboxData.blockStunTime, mHitboxData.pushbackAmount, mHitboxData.launchAmount);
 	}
 }
 
-void AHitboxActor::CheckCollision(float hitboxDamage, float stunTime)
+void AHitboxActor::CheckCollision(const float hitboxDamage, const float hitstunTime, const float blockstunTime, const float pushbackAmount, const float launchAmount)
 {
 	if (HasAuthority())
 	{
@@ -74,7 +71,7 @@ void AHitboxActor::CheckCollision(float hitboxDamage, float stunTime)
 					auto* playerChar = Cast<AUEFighterCharacter>(hurtbox->GetOwner());
 					if (playerChar)
 					{
-						playerChar->TakeAbilityDamage(hitboxDamage, stunTime);
+						playerChar->TakeAbilityDamage(Cast<AUEFighterCharacter>(instigator), hitboxDamage, hitstunTime, blockstunTime, pushbackAmount, launchAmount);
 					}
 				}
 			}

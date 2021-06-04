@@ -16,6 +16,29 @@ enum class EHitboxType : uint8
 	HB_HURTBOX		UMETA(DisplayName = "HurtBox")
 };
 
+USTRUCT(BlueprintType)
+struct FHitBoxData
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	EHitboxType hitboxType = EHitboxType::HB_PROXIMITY;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FVector hitboxLocation = FVector::ZeroVector;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float hitboxDamage = 0.f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float hitboxOffsetValue = 0.f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float hitStunTime = 0.f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float blockStunTime = 0.f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float pushbackAmount = 0.f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float launchAmount = 0.f;
+};
+
 UCLASS()
 class UEFIGHTER_API AHitboxActor : public AActor
 {
@@ -33,10 +56,10 @@ public:
 	void VisualizeHitbox();
 
 	UFUNCTION(BlueprintCallable)
-	void SpawnHitbox(const FVector& hitboxLocation, const float hitboxDamage, const float hitboxOffsetValue, float stunTime);
+	void SpawnHitbox( const FHitBoxData& hitboxData);
 
 	UFUNCTION(BlueprintCallable)
-	void CheckCollision(const float hitboxDamage, float stunTime);
+	void CheckCollision(const float hitboxDamage, const float hitstunTime, const float blockstunTime, const float pushbackDistance, const float launchAmount);
 
 	UPROPERTY(EditAnywhere)
 	UStaticMeshComponent* mHitboxMeshComponent;
@@ -50,32 +73,9 @@ public:
 	UPROPERTY(EditAnywhere)
 	UMaterial* mYellowMaterial;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Hitbox")
-	EHitboxType mHitboxType;
-
-#pragma region Getters
-	UFUNCTION(BlueprintCallable)
-	float GetHitBoxDamage() {return mHitboxDamage;}
-
-	UFUNCTION(BlueprintCallable)
-	float GetHitstunTIme() { return mHitstunTIme; }
-
-	UFUNCTION(BlueprintCallable)
-	float GetBlockstunTime() { return mBlockstunTime; }
-#pragma endregion
-
 protected:
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Hitbox")
-	float mHitboxDamage;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Hitbox")
-	float mHitstunTIme;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Hitbox")
-	float mBlockstunTime;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Hitbox")
-	FVector mHitboxLocation;
+	UPROPERTY(EditAnywhere)
+	FHitBoxData mHitboxData;
 
 	virtual void BeginPlay() override;
 };

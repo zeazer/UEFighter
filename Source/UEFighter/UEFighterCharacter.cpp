@@ -61,6 +61,7 @@ AUEFighterCharacter::AUEFighterCharacter()
 	mPlayerNumber = 0;
 	mCanMove = true;
 	mStunTime = 0.f;
+	mGravityScale = GetCharacterMovement()->GravityScale;
 }
 
 void AUEFighterCharacter::BeginPlay()
@@ -69,52 +70,6 @@ void AUEFighterCharacter::BeginPlay()
 	Cast<UUEFighterGameInstance>(GetGameInstance())->PushMenu(EMenuType::InGameHUD);
 	SpawnHurtbox();
 }
-
-void AUEFighterCharacter::StartJump()
-{
-	if (mCanMove)
-	{
-		mCharacterState = ECharacterState::VE_Jumping;
-	}
-}
-
-void AUEFighterCharacter::Jump()
-{
-	ACharacter::Jump();
-}
-
-void AUEFighterCharacter::StopJumping()
-{
-	ACharacter::StopJumping();
-}
-
-void AUEFighterCharacter::Landed(const FHitResult& Hit)
-{
-	ACharacter::Landed(Hit);
-	mCharacterState = ECharacterState::VE_Default;
-}
-
-void AUEFighterCharacter::BeginStun()
-{
-	GetWorldTimerManager().SetTimer(mStunTimerHandle, this, &AUEFighterCharacter::EndStun, mStunTime, false);
-	mCanMove = false;
-}
-
-void AUEFighterCharacter::EndStun()
-{
-	mCanMove = true;
-}
-
-void AUEFighterCharacter::StartCrouch()
-{
-	mCharacterState = ECharacterState::VE_Crouching;
-}
-
-void AUEFighterCharacter::StopCrouch()
-{
-	mCharacterState = ECharacterState::VE_Default;
-}
-
 
 void AUEFighterCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent)
 {
@@ -127,6 +82,8 @@ void AUEFighterCharacter::SetupPlayerInputComponent(class UInputComponent* Playe
 		PlayerInputComponent->BindAction("Jump", IE_Released, this, &AUEFighterCharacter::StopJumping);
 		PlayerInputComponent->BindAction("Crouch", IE_Pressed, this, &AUEFighterCharacter::StartCrouch);
 		PlayerInputComponent->BindAction("Crouch", IE_Released, this, &AUEFighterCharacter::StopCrouch);
+		PlayerInputComponent->BindAction("Block", IE_Pressed, this, &AUEFighterCharacter::StartBlocking);
+		PlayerInputComponent->BindAction("Block", IE_Released, this, &AUEFighterCharacter::StopBlocking);
 
 		PlayerInputComponent->BindAxis("MoveRight", this, &AUEFighterCharacter::MoveRight);
 		//PlayerInputComponent->BindAxis("MoveRightController", this, &AUEFighterCharacter::MoveRight);
@@ -154,6 +111,73 @@ void AUEFighterCharacter::SetupPlayerInputComponent(class UInputComponent* Playe
 		const FGameplayAbilityInputBinds binds("Confirm", "Cancel", "EGASAbilityInputID", static_cast<int32>(EGASAbilityInputID::Confirm), static_cast<int32>(EGASAbilityInputID::Cancel));
 		mAbilitySystemComponent->BindAbilityActivationToInputComponent(InputComponent, binds);
 	}*/
+}
+
+void AUEFighterCharacter::StartJump()
+{
+	if (mCanMove)
+	{
+		mCharacterState = ECharacterState::VE_Jumping;
+	}
+}
+
+void AUEFighterCharacter::Jump()
+{
+	ACharacter::Jump();
+}
+
+void AUEFighterCharacter::StopJumping()
+{
+	ACharacter::StopJumping();
+}
+
+void AUEFighterCharacter::Landed(const FHitResult& Hit)
+{
+	if (mCharacterState == ECharacterState::VE_Jumping || mCharacterState == ECharacterState::VE_Launched)
+	{
+		ACharacter::Landed(Hit);
+		GetCharacterMovement()->GravityScale = mGravityScale;
+		mCharacterState = ECharacterState::VE_Default;
+	}
+}
+
+void AUEFighterCharacter::ResetAttacks()
+{
+	for (auto& attackUsed : mWasAttackUsed)
+	{
+		attackUsed = false;
+	}
+}
+
+void AUEFighterCharacter::BeginStun()
+{
+	GetWorldTimerManager().SetTimer(mStunTimerHandle, this, &AUEFighterCharacter::EndStun, mStunTime, false);
+	mCanMove = false;
+}
+
+void AUEFighterCharacter::EndStun()
+{
+	mCanMove = true;
+}
+
+void AUEFighterCharacter::StartBlocking()
+{
+	mCharacterState = ECharacterState::VE_Blocking;
+}
+
+void AUEFighterCharacter::StopBlocking()
+{
+	mCharacterState = ECharacterState::VE_Default;
+}
+
+void AUEFighterCharacter::StartCrouch()
+{
+	mCharacterState = ECharacterState::VE_Crouching;
+}
+
+void AUEFighterCharacter::StopCrouch()
+{
+	mCharacterState = ECharacterState::VE_Default;
 }
 
 void AUEFighterCharacter::PossessedBy(AController* NewController)
@@ -214,17 +238,58 @@ UAbilitySystemComponent* AUEFighterCharacter::GetAbilitySystemComponent() const
 	return mAbilitySystemComponent;
 }
 
-void AUEFighterCharacter::TakeAbilityDamage(float damageAmount, float stunTime)
+void AUEFighterCharacter::TakeAbilityDamage(AUEFighterCharacter* damageInstigator, const float damageAmount, const float stunTime, const float blockstunTime, const float pushbackAmount, const float launchAmount)
 {
-	mPlayerHealth -= damageAmount;
+	if (mCharacterState != ECharacterState::VE_Blocking)
+	{
+		mPlayerHealth -= damageAmount;
+		mStunTime = stunTime;
 
-	mCharacterState = ECharacterState::VE_Stunned;
-	mStunTime = stunTime;
-	BeginStun();
+		if (mStunTime > 0.f)
+		{
+			mCharacterState = ECharacterState::VE_Stunned;
+			BeginStun();
+		}
+	}
+	else
+	{
+		float reducedDamage = damageAmount * 0.5f;
+		mPlayerHealth -= reducedDamage;
+		mStunTime = blockstunTime;
+
+		if (stunTime > 0.f)
+		{
+			BeginStun();
+		}
+		else
+		{
+			mCharacterState = ECharacterState::VE_Default;
+		}
+	}
+
+	float direction = -GetActorForwardVector().Y;
+	if (damageInstigator)
+	{
+		damageInstigator->PerformPushback(pushbackAmount, 0.f, direction, mCharacterState == ECharacterState::VE_Blocking);
+		direction = damageInstigator->GetActorForwardVector().Y;
+	}
+	PerformPushback(pushbackAmount, launchAmount, direction, mCharacterState == ECharacterState::VE_Blocking);
 
 	if (mPlayerHealth < 0.0f)
 	{
 		mPlayerHealth = 0.0f;
+	}
+}
+
+void AUEFighterCharacter::PerformPushback(const float pushbackAmount, const float launchAmount, const float direction, bool hasBlocked)
+{
+	if (hasBlocked)
+	{
+		LaunchCharacter(FVector(0.f, direction * pushbackAmount * 2.f, 0.f), false, false);
+	}
+	else
+	{
+		LaunchCharacter(FVector(0.f, direction * pushbackAmount, launchAmount), false, false);
 	}
 }
 
@@ -307,9 +372,9 @@ void AUEFighterCharacter::SpawnHurtbox()
 
 void AUEFighterCharacter::MoveRight(float Value)
 {
-	if (mCanMove && mCharacterState  != ECharacterState::VE_Crouching)
+	if (mCanMove && mCharacterState != ECharacterState::VE_Crouching && mCharacterState != ECharacterState::VE_Blocking)
 	{
-		if (mCharacterState != ECharacterState::VE_Jumping)
+		if (mCharacterState != ECharacterState::VE_Jumping && mCharacterState != ECharacterState::VE_Launched)
 		{
 			if (Value > 0.2f)
 			{
