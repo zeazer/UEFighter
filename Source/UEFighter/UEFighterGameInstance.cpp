@@ -181,5 +181,4 @@ void UUEFighterGameInstance::LoadCharacterClass(const FString& characterClassPat
 		auto type = PlayerPawnBPClass.Class.GetDefaultObject()->GetCharacterClass();
 		mLoadedCharacterClasses.Emplace(type, PlayerPawnBPClass.Class);
 	}
-
 }

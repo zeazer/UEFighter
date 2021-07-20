@@ -74,6 +74,8 @@ public:
 
 	void PossessPlayer(AUEFighterCharacter* characterRef, UWorld* world, int32 playerIndex);
 
+	TMap<ECharacterClass, TSubclassOf<AUEFighterCharacter>>& GetLoadedCharacterClasses() { return mLoadedCharacterClasses; }
+
 private:
 	bool IsLevelTransfereAvailable();
 

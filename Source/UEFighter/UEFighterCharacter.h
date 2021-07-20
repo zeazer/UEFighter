@@ -114,12 +114,18 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	float GetPlayerHealth() { return mPlayerHealth; }
+	
 #pragma endregion
+
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Character")
+	TSubclassOf<class ACaptureModel> mCaptureModel;
 
 protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Game, meta = (AllowPrivateAccess = "true"))
 	class UGASComponent* mAbilitySystemComponent;
+
+	
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character")
 	ECharacterClass mCharacterClass;
