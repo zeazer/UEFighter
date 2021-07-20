@@ -71,6 +71,47 @@ void AUEFighterCharacter::BeginPlay()
 	SpawnHurtbox();
 }
 
+<<<<<<< Updated upstream
+=======
+<<<<<<< HEAD
+void AUEFighterCharacter::StartJump()
+{
+	if (mCanMove)
+	{
+		mDirectionalInput = ECharacterState::VE_Jumping;
+	}
+}
+
+void AUEFighterCharacter::Jump()
+{
+	ACharacter::Jump();
+}
+
+void AUEFighterCharacter::StopJumping()
+{
+	ACharacter::StopJumping();
+}
+
+void AUEFighterCharacter::Landed(const FHitResult& Hit)
+{
+	ACharacter::Landed(Hit);
+	mDirectionalInput = ECharacterState::VE_Default;
+}
+
+void AUEFighterCharacter::StartCrouch()
+{
+	mIsCrouching = true;
+}
+
+void AUEFighterCharacter::StopCrouch()
+{
+	mIsCrouching = false;
+}
+
+
+=======
+>>>>>>> caa8d9145f9686832c81c070633b4420a76bc72d
+>>>>>>> Stashed changes
 void AUEFighterCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent)
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
@@ -374,6 +415,24 @@ void AUEFighterCharacter::MoveRight(float Value)
 {
 	if (mCanMove && mCharacterState != ECharacterState::VE_Crouching && mCharacterState != ECharacterState::VE_Blocking)
 	{
+<<<<<<< Updated upstream
+=======
+<<<<<<< HEAD
+		if (mDirectionalInput != ECharacterState::VE_Jumping)
+		{
+			if (Value > 0.2f)
+			{
+				mDirectionalInput = ECharacterState::VE_MovingRight;
+			}
+			else if (Value < -0.2f)
+			{
+				mDirectionalInput = ECharacterState::VE_MovingLeft;
+			}
+			else
+			{
+				mDirectionalInput = ECharacterState::VE_Default;
+=======
+>>>>>>> Stashed changes
 		if (mCharacterState != ECharacterState::VE_Jumping && mCharacterState != ECharacterState::VE_Launched)
 		{
 			if (Value > 0.2f)
@@ -387,6 +446,10 @@ void AUEFighterCharacter::MoveRight(float Value)
 			else
 			{
 				mCharacterState = ECharacterState::VE_Default;
+<<<<<<< Updated upstream
+=======
+>>>>>>> caa8d9145f9686832c81c070633b4420a76bc72d
+>>>>>>> Stashed changes
 			}
 		}
 

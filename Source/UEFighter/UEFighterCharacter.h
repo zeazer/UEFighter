@@ -12,12 +12,26 @@ UENUM(BlueprintType)
 enum class ECharacterState : uint8
 {
 	VE_Default			UMETA(DisplayName = "NOT_MOVING"),
+<<<<<<< Updated upstream
+=======
+<<<<<<< HEAD
+	VE_MovingRight		UMETA(DisplayName = "MOVING_RIGHT"),
+	VE_MovingLeft		UMETA(DisplayName = "MOVING_LEFT"),
+	VE_Jumping			UMETA(DisplayName = "JUMPING"),
+	VE_Stunned			UMETA(DisplayName = "STUNNED"),
+	VE_Blocking			UMETA(DisplayName = "BLOCKING")
+=======
+>>>>>>> Stashed changes
 	VE_Moving			UMETA(DisplayName = "MOVING"),
 	VE_Crouching		UMETA(DisplayName = "CROUCHING"),
 	VE_Jumping			UMETA(DisplayName = "JUMPING"),
 	VE_Stunned			UMETA(DisplayName = "STUNNED"),
 	VE_Blocking			UMETA(DisplayName = "BLOCKING"),
 	VE_Launched			UMETA(DisplayName = "LAUNCHED")
+<<<<<<< Updated upstream
+=======
+>>>>>>> caa8d9145f9686832c81c070633b4420a76bc72d
+>>>>>>> Stashed changes
 };
 
 UENUM(BlueprintType)
@@ -131,7 +145,15 @@ protected:
 	ECharacterClass mCharacterClass;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
+<<<<<<< Updated upstream
 	ECharacterState mCharacterState;
+=======
+<<<<<<< HEAD
+	ECharacterState mDirectionalInput;
+=======
+	ECharacterState mCharacterState;
+>>>>>>> caa8d9145f9686832c81c070633b4420a76bc72d
+>>>>>>> Stashed changes
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
 	float mStunTime;
