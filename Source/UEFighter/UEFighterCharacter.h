@@ -6,42 +6,21 @@
 #include "GameFramework/Character.h"
 #include "UEFighterGameInstance.h"
 #include "AbilitySystemInterface.h"
+#include "Abilities/GameplayAbilityTypes.h"
 #include "UEFighterCharacter.generated.h"
 
 UENUM(BlueprintType)
 enum class ECharacterState : uint8
 {
 	VE_Default			UMETA(DisplayName = "NOT_MOVING"),
-<<<<<<< Updated upstream
-=======
-<<<<<<< HEAD
 	VE_MovingRight		UMETA(DisplayName = "MOVING_RIGHT"),
 	VE_MovingLeft		UMETA(DisplayName = "MOVING_LEFT"),
 	VE_Jumping			UMETA(DisplayName = "JUMPING"),
 	VE_Stunned			UMETA(DisplayName = "STUNNED"),
-	VE_Blocking			UMETA(DisplayName = "BLOCKING")
-=======
->>>>>>> Stashed changes
+	VE_Blocking			UMETA(DisplayName = "BLOCKING"),
 	VE_Moving			UMETA(DisplayName = "MOVING"),
 	VE_Crouching		UMETA(DisplayName = "CROUCHING"),
-	VE_Jumping			UMETA(DisplayName = "JUMPING"),
-	VE_Stunned			UMETA(DisplayName = "STUNNED"),
-	VE_Blocking			UMETA(DisplayName = "BLOCKING"),
 	VE_Launched			UMETA(DisplayName = "LAUNCHED")
-<<<<<<< Updated upstream
-=======
->>>>>>> caa8d9145f9686832c81c070633b4420a76bc72d
->>>>>>> Stashed changes
-};
-
-UENUM(BlueprintType)
-enum class EAttack : uint8
-{
-	VE_LightAttack			UMETA(DisplayName = "LIGHT_ATTACK"),
-	VE_MediumAttack			UMETA(DisplayName = "MEDIUM_ATTACK"),
-	VE_HeavyAttack			UMETA(DisplayName = "HEAVY_ATTACK"),
-	VE_SpecialAttack		UMETA(DisplayName = "SPECIAL_ATTACK"),
-	VE_COUNT
 };
 
 UCLASS(config = Game)
@@ -60,9 +39,6 @@ public:
 	virtual void Jump() override;
 	virtual void StopJumping() override;
 	virtual void Landed(const FHitResult& Hit) override;
-
-	UFUNCTION(BlueprintCallable)
-	void ResetAttacks();
 
 	UFUNCTION(BlueprintCallable)
 	void BeginStun();
@@ -98,6 +74,20 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void UnlockAnimation();
+
+	UFUNCTION(BlueprintCallable)
+	void AddAbilityToSlot(const FName& Ability, int32 SlotIndex);
+
+	UFUNCTION(BlueprintCallable)
+	void AddAbility(class UGASGameplayAbility* Ability);
+
+	UFUNCTION(BlueprintCallable)
+	void RemoveAbility(class UGASGameplayAbility* Ability);
+
+	UFUNCTION(BlueprintCallable)
+	void RemoveAbilityByName(const FName& AbilityName);
+
+	class UAnimMontage* GetAnimation(const FName& AbilityName);
 
 	//FORCEINLINE class UCameraComponent* GetSideViewCameraComponent() const { return SideViewCameraComponent; }
 	//
@@ -139,21 +129,12 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Game, meta = (AllowPrivateAccess = "true"))
 	class UGASComponent* mAbilitySystemComponent;
 
-	
-
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character")
 	ECharacterClass mCharacterClass;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
-<<<<<<< Updated upstream
 	ECharacterState mCharacterState;
-=======
-<<<<<<< HEAD
 	ECharacterState mDirectionalInput;
-=======
-	ECharacterState mCharacterState;
->>>>>>> caa8d9145f9686832c81c070633b4420a76bc72d
->>>>>>> Stashed changes
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
 	float mStunTime;
@@ -179,35 +160,36 @@ protected:
 	virtual void OnRep_PlayerState() override;
 
 	virtual void InitializeAttributes();
-	virtual void GiveAbilities();
 
+	void GrantStartAbilities();
 
 	void LoadHurtbox();
 	void SpawnHurtbox();
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Hitbox")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Hitbox")
 	AActor* mHurtbox;
 
 	TSubclassOf<class AActor> mHurtboxClass;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Health")
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Player")
+	TMap<FName, class UAnimMontage*> mAbilityAnimations;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	float mPlayerHealth;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Health")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	float mMaxDistanceApart;
 
 	float mFaceDirection;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	int mPlayerNumber;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	bool mCanMove;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	bool mIsAnimationLocked;
-
-	
 
 #pragma region Attacks
 	UFUNCTION(BlueprintCallable)
@@ -222,17 +204,15 @@ protected:
 	UFUNCTION(BlueprintCallable)
 	void StartAttack4();
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Attacks")
-	TArray<bool> mWasAttackUsed;
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Player")
+	TSubclassOf<class UGameplayEffect> mAttributeEffect;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Attacks")
-	bool mCanCombo;
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Player")
+	TArray<TSubclassOf<class UGASGameplayAbility>> mAbilityTemplates;
 
-	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "GAS")
-	TSubclassOf<class UGameplayEffect> mDefaultAttributeEffect;
+	TMap<FName, FGameplayAbilitySpecHandle> mAbilitySpecs;
 
-	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "GAS")
-	TArray<TSubclassOf<class UGASGameplayAbility>> mDefaultAbilities;
+	TMap<int32, FGameplayAbilitySpecHandle> mAbilitySlots;
 
 	UPROPERTY()
 	class UGASAttributeSet* mAttributes;

@@ -16,9 +16,9 @@ UUEFighterGameInstance::UUEFighterGameInstance(const FObjectInitializer& ObjectI
 	mCurrentActiveWidget = nullptr;
 	mNumberOfPlayers = 2;
 	mIsDeviceUsedForMultiplePlayers = false;
-	LoadCharacterClass(TEXT("/Game/UEFighter/Blueprints/UEFighterCharacter_BP"));
-	LoadCharacterClass(TEXT("/Game/UEFighter/Blueprints/SwatFighterCharacter_BP"));
-	LoadCharacterClass(TEXT("/Game/UEFighter/Blueprints/MutantFighterCharacter_BP"));
+	LoadCharacterClass(TEXT("/Game/UEFighter/Blueprints/Characters/UEFighterCharacter_BP"));
+	LoadCharacterClass(TEXT("/Game/UEFighter/Blueprints/Characters/SwatFighterCharacter_BP"));
+	LoadCharacterClass(TEXT("/Game/UEFighter/Blueprints/Characters/MutantFighterCharacter_BP"));
 	mPlayerDetails.Init(FPlayerDetails(), mNumberOfPlayers);
 
 	static ConstructorHelpers::FClassFinder<UMenuBase> inGameWIdget(TEXT("WidgetBlueprint'/Game/UEFighter/UI/PlayerHUD.PlayerHUD_C'"));

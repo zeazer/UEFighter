@@ -12,3 +12,13 @@ void UCharacterSelectElement::OnClick()
 
 	gameInstance->SwitchToLevelWithName(TEXT("InGame"), TEXT("UEFighterMap"));
 }
+
+bool UCharacterSelectElement::Initialize()
+{
+	ShownCharacterName = UEnum::GetValueAsString<ECharacterClass>(mCharacterClassType);
+	FString Left;
+	FString Right;
+	ShownCharacterName.Split(TEXT("ECharacterClass::"), &Left, &Right);
+	ShownCharacterName = Right;
+	return Super::Initialize();
+}

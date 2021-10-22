@@ -15,9 +15,15 @@ class UEFIGHTER_API UCharacterSelectElement : public UUserWidget
 {
 	GENERATED_BODY()
 public:
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	FString ShownCharacterName;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character")
 	ECharacterClass mCharacterClassType;
 
 	UFUNCTION(BlueprintCallable)
 	void OnClick();
+
+	virtual bool Initialize() override;
 };

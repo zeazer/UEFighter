@@ -14,6 +14,7 @@
 #include "GAS/GASGameplayAbility.h"
 #include <GameplayEffect.h>
 #include "TimerManager.h"
+#include "Animation/AnimMontage.h"
 
 AUEFighterCharacter::AUEFighterCharacter()
 {
@@ -52,12 +53,9 @@ AUEFighterCharacter::AUEFighterCharacter()
 	mAbilitySystemComponent->SetReplicationMode(EGameplayEffectReplicationMode::Minimal);
 	mAttributes = CreateDefaultSubobject<UGASAttributeSet>("Attributes");
 
-	mWasAttackUsed.Init(false, (int)EAttack::VE_COUNT);
-
 	mHurtbox = nullptr;
 	mPlayerHealth = 1.f;
 	mMaxDistanceApart = 800.f;
-	mCanCombo = false;
 	mPlayerNumber = 0;
 	mCanMove = true;
 	mStunTime = 0.f;
@@ -68,50 +66,13 @@ void AUEFighterCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 	Cast<UUEFighterGameInstance>(GetGameInstance())->PushMenu(EMenuType::InGameHUD);
+	if (mAbilitySystemComponent)
+	{
+		mAbilitySystemComponent->InitAbilityActorInfo(this, this);
+	}
 	SpawnHurtbox();
 }
 
-<<<<<<< Updated upstream
-=======
-<<<<<<< HEAD
-void AUEFighterCharacter::StartJump()
-{
-	if (mCanMove)
-	{
-		mDirectionalInput = ECharacterState::VE_Jumping;
-	}
-}
-
-void AUEFighterCharacter::Jump()
-{
-	ACharacter::Jump();
-}
-
-void AUEFighterCharacter::StopJumping()
-{
-	ACharacter::StopJumping();
-}
-
-void AUEFighterCharacter::Landed(const FHitResult& Hit)
-{
-	ACharacter::Landed(Hit);
-	mDirectionalInput = ECharacterState::VE_Default;
-}
-
-void AUEFighterCharacter::StartCrouch()
-{
-	mIsCrouching = true;
-}
-
-void AUEFighterCharacter::StopCrouch()
-{
-	mIsCrouching = false;
-}
-
-
-=======
->>>>>>> caa8d9145f9686832c81c070633b4420a76bc72d
->>>>>>> Stashed changes
 void AUEFighterCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent)
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
@@ -147,11 +108,6 @@ void AUEFighterCharacter::SetupPlayerInputComponent(class UInputComponent* Playe
 		}*/
 
 	}
-	/*if (mAbilitySystemComponent && InputComponent)
-	{
-		const FGameplayAbilityInputBinds binds("Confirm", "Cancel", "EGASAbilityInputID", static_cast<int32>(EGASAbilityInputID::Confirm), static_cast<int32>(EGASAbilityInputID::Cancel));
-		mAbilitySystemComponent->BindAbilityActivationToInputComponent(InputComponent, binds);
-	}*/
 }
 
 void AUEFighterCharacter::StartJump()
@@ -179,14 +135,6 @@ void AUEFighterCharacter::Landed(const FHitResult& Hit)
 		ACharacter::Landed(Hit);
 		GetCharacterMovement()->GravityScale = mGravityScale;
 		mCharacterState = ECharacterState::VE_Default;
-	}
-}
-
-void AUEFighterCharacter::ResetAttacks()
-{
-	for (auto& attackUsed : mWasAttackUsed)
-	{
-		attackUsed = false;
 	}
 }
 
@@ -228,21 +176,36 @@ void AUEFighterCharacter::PossessedBy(AController* NewController)
 	mAbilitySystemComponent->InitAbilityActorInfo(this, this);
 
 	InitializeAttributes();
-	GiveAbilities();
+	GrantStartAbilities();
 }
 
 void AUEFighterCharacter::InitializeAttributes()
 {
-	if (mAbilitySystemComponent && mDefaultAttributeEffect)
+	if (mAbilitySystemComponent && mAttributeEffect)
 	{
 		FGameplayEffectContextHandle effectContect = mAbilitySystemComponent->MakeEffectContext();
 		effectContect.AddSourceObject(this);
 
-		FGameplayEffectSpecHandle speccHandle = mAbilitySystemComponent->MakeOutgoingSpec(mDefaultAttributeEffect, 1, effectContect);
+		FGameplayEffectSpecHandle speccHandle = mAbilitySystemComponent->MakeOutgoingSpec(mAttributeEffect, 1, effectContect);
 
 		if (speccHandle.IsValid())
 		{
 			FActiveGameplayEffectHandle GEHandle = mAbilitySystemComponent->ApplyGameplayEffectSpecToSelf(*speccHandle.Data.Get());
+		}
+	}
+}
+
+void AUEFighterCharacter::GrantStartAbilities()
+{
+	if (mAbilitySystemComponent)
+	{
+		for (int32 Index = 0; Index < mAbilityTemplates.Num(); Index++)
+		{
+			if (auto Object = mAbilityTemplates[Index].GetDefaultObject())
+			{
+				AddAbility(Object);
+				AddAbilityToSlot(Object->AbilitytID, Index);
+			}
 		}
 	}
 }
@@ -253,25 +216,6 @@ void AUEFighterCharacter::OnRep_PlayerState()
 
 	mAbilitySystemComponent->InitAbilityActorInfo(this, this);
 	InitializeAttributes();
-
-	/*if (mAbilitySystemComponent && InputComponent)
-	{
-		const FGameplayAbilityInputBinds binds("Confirm", "Cancel", "EGASAbilityInputID", static_cast<int32>(EGASAbilityInputID::Confirm), static_cast<int32>(EGASAbilityInputID::Cancel));
-		mAbilitySystemComponent->BindAbilityActivationToInputComponent(InputComponent, binds);
-	}*/
-}
-
-void AUEFighterCharacter::GiveAbilities()
-{
-	if (HasAuthority() && mAbilitySystemComponent)
-	{
-		for (auto& startupAbility : mDefaultAbilities)
-		{
-			int32 id = static_cast<int32>(startupAbility.GetDefaultObject()->mAbilityInputID);
-			mAbilitySystemComponent->GiveAbility(
-				FGameplayAbilitySpec(startupAbility, 1, id, this));
-		}
-	}
 }
 
 UAbilitySystemComponent* AUEFighterCharacter::GetAbilitySystemComponent() const
@@ -349,6 +293,42 @@ void AUEFighterCharacter::UnlockAnimation()
 	mIsAnimationLocked = false;
 }
 
+void AUEFighterCharacter::AddAbilityToSlot(const FName& Ability, int32 SlotIndex)
+{
+	if (auto Spec = mAbilitySpecs.Find(Ability))
+	{
+		mAbilitySlots.Add(SlotIndex, *Spec);
+	}
+}
+
+void AUEFighterCharacter::AddAbility(UGASGameplayAbility* Ability)
+{
+	FGameplayAbilitySpec Spec(Ability, 0, -1);
+	mAbilitySpecs.Add(Ability->AbilitytID, mAbilitySystemComponent->GiveAbility(Spec));
+}
+
+void AUEFighterCharacter::RemoveAbility(UGASGameplayAbility* Ability)
+{
+	RemoveAbilityByName(Ability->AbilitytID);
+}
+
+void AUEFighterCharacter::RemoveAbilityByName(const FName& AbilityName)
+{
+	if (auto Spec = mAbilitySpecs.Find(AbilityName))
+	{
+		mAbilitySystemComponent->ClearAbility(*Spec);
+	}
+}
+
+UAnimMontage* AUEFighterCharacter::GetAnimation(const FName& AbilityName)
+{
+	if (mAbilityAnimations.Contains(AbilityName))
+	{
+		return mAbilityAnimations[AbilityName];
+	}
+	return nullptr;
+}
+
 void AUEFighterCharacter::LockAnimation()
 {
 	mIsAnimationLocked = true;
@@ -369,27 +349,51 @@ void AUEFighterCharacter::FlipCharacter(int scaleValue)
 
 void AUEFighterCharacter::StartAttack1()
 {
-	mWasAttackUsed[(int)EAttack::VE_LightAttack] = true;
+	if (mAbilitySystemComponent)
+	{
+		if (auto Spec = mAbilitySlots.Find(0))
+		{
+			mAbilitySystemComponent->TryActivateAbility(*Spec);
+		}
+	}
 }
 
 void AUEFighterCharacter::StartAttack2()
 {
-	mWasAttackUsed[(int)EAttack::VE_MediumAttack] = true;
+	if (mAbilitySystemComponent)
+	{
+		if (auto Spec = mAbilitySlots.Find(1))
+		{
+			mAbilitySystemComponent->TryActivateAbility(*Spec);
+		}
+	}
 }
 
 void AUEFighterCharacter::StartAttack3()
 {
-	mWasAttackUsed[(int)EAttack::VE_HeavyAttack] = true;
+	if (mAbilitySystemComponent)
+	{
+		if (auto Spec = mAbilitySlots.Find(2))
+		{
+			mAbilitySystemComponent->TryActivateAbility(*Spec);
+		}
+	}
 }
 
 void AUEFighterCharacter::StartAttack4()
 {
-	mWasAttackUsed[(int)EAttack::VE_SpecialAttack] = true;
+	if (mAbilitySystemComponent)
+	{
+		if (auto Spec = mAbilitySlots.Find(3))
+		{
+			mAbilitySystemComponent->TryActivateAbility(*Spec);
+		}
+	}
 }
 
 void AUEFighterCharacter::LoadHurtbox()
 {
-	ConstructorHelpers::FClassFinder<AActor> hurtboxActorClass(TEXT("Blueprint'/Game/UEFighter/Blueprints/Hurtbox_BP.Hurtbox_BP_C'"));
+	ConstructorHelpers::FClassFinder<AActor> hurtboxActorClass(TEXT("Blueprint'/Game/UEFighter/Blueprints/Abilities/Hurtbox_BP.Hurtbox_BP_C'"));
 	if (hurtboxActorClass.Succeeded())
 	{
 		mHurtboxClass = hurtboxActorClass.Class;
@@ -415,9 +419,6 @@ void AUEFighterCharacter::MoveRight(float Value)
 {
 	if (mCanMove && mCharacterState != ECharacterState::VE_Crouching && mCharacterState != ECharacterState::VE_Blocking)
 	{
-<<<<<<< Updated upstream
-=======
-<<<<<<< HEAD
 		if (mDirectionalInput != ECharacterState::VE_Jumping)
 		{
 			if (Value > 0.2f)
@@ -431,33 +432,30 @@ void AUEFighterCharacter::MoveRight(float Value)
 			else
 			{
 				mDirectionalInput = ECharacterState::VE_Default;
-=======
->>>>>>> Stashed changes
-		if (mCharacterState != ECharacterState::VE_Jumping && mCharacterState != ECharacterState::VE_Launched)
-		{
-			if (Value > 0.2f)
-			{
-				mCharacterState = ECharacterState::VE_Moving;
 			}
-			else if (Value < -0.2f)
-			{
-				mCharacterState = ECharacterState::VE_Moving;
-			}
-			else
-			{
-				mCharacterState = ECharacterState::VE_Default;
-<<<<<<< Updated upstream
-=======
->>>>>>> caa8d9145f9686832c81c070633b4420a76bc72d
->>>>>>> Stashed changes
-			}
-		}
 
-		if (Value >= 1 || Value <= -1)
-		{
-			FlipCharacter(Value);
+			if (mCharacterState != ECharacterState::VE_Jumping && mCharacterState != ECharacterState::VE_Launched)
+			{
+				if (Value > 0.2f)
+				{
+					mCharacterState = ECharacterState::VE_Moving;
+				}
+				else if (Value < -0.2f)
+				{
+					mCharacterState = ECharacterState::VE_Moving;
+				}
+				else
+				{
+					mCharacterState = ECharacterState::VE_Default;
+				}
+			}
+
+			if (Value >= 1 || Value <= -1)
+			{
+				FlipCharacter(Value);
+			}
+			AddMovementInput(FVector(0.f, -1.f, 0.f), Value);
 		}
-		AddMovementInput(FVector(0.f, -1.f, 0.f), Value);
 	}
 }
 
@@ -470,4 +468,3 @@ void AUEFighterCharacter::TouchStopped(const ETouchIndex::Type FingerIndex, cons
 {
 	StopJumping();
 }
-

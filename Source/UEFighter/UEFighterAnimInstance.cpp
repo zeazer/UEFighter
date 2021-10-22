@@ -7,7 +7,7 @@
 
 UUEFighterAnimInstance::UUEFighterAnimInstance()
 {
-	ConstructorHelpers::FClassFinder<AHitboxActor> hitboxActorClass(TEXT("Blueprint'/Game/UEFighter/Blueprints/HitboxActor_BP.HitboxActor_BP_C'"));
+	ConstructorHelpers::FClassFinder<AHitboxActor> hitboxActorClass(TEXT("Blueprint'/Game/UEFighter/Blueprints/Abilities/HitboxActor_BP.HitboxActor_BP_C'"));
 	if (hitboxActorClass.Succeeded())
 	{
 		mHitboxActorClass = hitboxActorClass.Class;

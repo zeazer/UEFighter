@@ -6,18 +6,6 @@
 #include "Abilities/GameplayAbility.h"
 #include "GASGameplayAbility.generated.h"
 
-UENUM(BlueprintType)
-enum class EGASAbilityInputID : uint8
-{
-	None,
-	Cancel,
-	Confirm,
-	Attack1,
-	Attack2,
-	Attack3,
-	Attack4
-};
-
 /**
  * 
  */
@@ -30,5 +18,12 @@ public:
 	UGASGameplayAbility();
 
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Ability")
-	EGASAbilityInputID mAbilityInputID = EGASAbilityInputID::None;
+	FName AbilitytID = TEXT("None");
+
+	UFUNCTION(BlueprintPure)
+	class UAnimMontage* GetAbilityAnimation();
+
+protected:
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Ability")
+	class AUEFighterCharacter* Owner;
 };
